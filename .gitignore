@@ -1,0 +1,3 @@
+# Exclude notebooks/ except certain ones.
+/notebooks/*
+#!/notebooks/foo
