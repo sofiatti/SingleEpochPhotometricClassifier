@@ -8,7 +8,7 @@ import os
 from numpy.random import normal, uniform, choice
 from scipy import io, interpolate, optimize
 
-my_dir = '/Users/carolinesofiatti/projects/scp/flux_vs_fluxdiff/'
+my_dir = '/Users/carolinesofiatti/projects/classification/data/'
 
 t0 = 0
 hostr_v = 3.1
@@ -38,12 +38,6 @@ all_model_II = ['s11-2005lc', 's11-2005gi', 's11-2006jl', 'nugent-sn2p',
                 'snana-2007og', 'snana-2007ny', 'snana-2007nv',
                 'snana-2007pg', 's11-2004hx', 'nugent-sn2l', 'nugent-sn2n',
                 'snana-2006ez', 'snana-2006ix']
-'''
-all_model_Ibc = ['s11-2005hl', 's11-2005hm', 's11-2006fo', 'nugent-sn1bc',
-                 'nugent-hyper']
-all_model_II = ['s11-2004hx', 's11-2005lc', 's11-2005gi', 's11-2006jl',
-                'nugent-sn2p', 'nugent-sn2l']
-'''
 
 
 def all_mabs(sne_type):
@@ -58,24 +52,42 @@ def all_mabs(sne_type):
 def obsflux_Ia(filter, z, my_phase):
     """Given a filter, redshift z at given phase, generates the observed
     magnitude for SNe Type Ia"""
+
     alpha = 0.12
     beta = 3.
     x1 = normal(0., 1.)
     c = normal(0., 0.1)
-    mabs = normal(-19.1 - alpha*x1 + beta*c, scale=0.51)
-    # Type Ia model
+    mabs = normal(-19.1 - alpha*x1 + beta*c, scale=0.15)
     zp = zero_point[filter]
     zpsys = zero_point['zpsys']
-    model_Ia = sncosmo.Model(source=sncosmo.get_source('salt2',
-                                                       version='2.4'))
-    # Type Ia: Getting parameters for salt
+
+    # Checking if bandpass is outside spectral range for SALT2. If yes,
+    # use salt2-extended.
+    salt_name = 'salt2'
+    salt_version = '2.4'
+
+    rest_salt_max_wav = 9200
+    rest_salt_min_wav = 2000
+
+    salt_max_wav = (1 + z) * rest_salt_max_wav
+    salt_min_wav = (1 + z) * rest_salt_min_wav
+
+    band = sncosmo.get_bandpass(filter)
+    if (band.wave[0] < salt_min_wav or band.wave[-1] > salt_max_wav):
+        salt_name = 'salt2-extended'
+        salt_version = '1.0'
+
+    # Type Ia model
+    model_Ia = sncosmo.Model(source=sncosmo.get_source(salt_name,
+                                                       version=salt_version))
     model_Ia.set(z=z)
     model_Ia.set_source_peakabsmag(mabs, 'bessellb', 'vega')
     p = {'z': z, 't0': t0, 'x1': x1, 'c': c}
+    p['x0'] = model_Ia.get('x0')
     model_Ia.set(**p)
     phase = my_phase + model_Ia.source.peakphase('bessellb')
     obsflux_Ia = model_Ia.bandflux(filter, t0+(phase * (1+z)), zp, zpsys)
-    return obsflux_Ia
+    return obsflux_Ia, p, salt_name, salt_version
 
 
 def obsflux_cc(filter, z, sn_type, all_model):
@@ -100,7 +112,7 @@ def obsflux_cc(filter, z, sn_type, all_model):
     my_phase = uniform(0., 5.)
     phase = my_phase + model.source.peakphase('bessellb')
     obsflux = model.bandflux(filter, t0+(phase * (1+z)), zp, zpsys)
-    return obsflux
+    return obsflux, p_core_collapse
 
 
 def save_file(object, filename, protocol=-1):
@@ -139,14 +151,20 @@ def z_from_photo_z(photo_z_file, n, my_z_array=None):
     return out_z
 
 
-def mc_file(n, filter, min_phase, max_phase, my_z=None, photo_z_file=None,
+def mc_file(n, filter, min_phase, max_phase, z=None, photo_z_file=None,
             z_for_photo_z_file=None):
     """Returns 3 arrays. For each SNe type, returns an array with the observed
-    filter flux."""
+    filter flux.
 
-    if my_z is None:
+    z is either an array (for photo_z_file) or a number"""
+
+    if z is None:
         z_array = z_from_photo_z(photo_z_file, n, z_for_photo_z_file)
-    files_dir = 'test/mc_files_%.0f_%.0f_%.0f' % (n, min_phase, max_phase)
+
+    else:
+        z_array = np.ones(n)*z
+
+    files_dir = my_dir + 'mc_files_%.0f_%.0f_%.0f' % (n, min_phase, max_phase)
     if not os.path.exists(files_dir):
         os.makedirs(files_dir)
 
@@ -154,57 +172,82 @@ def mc_file(n, filter, min_phase, max_phase, my_z=None, photo_z_file=None,
     type_Ia_flux = flux[:, 0]
     type_Ibc_flux = flux[:, 1]
     type_II_flux = flux[:, 2]
+
+    p_Ia = []
+    p_Ibc = []
+    p_II = []
+
+    salt_name = []
+    salt_version = []
+
     for i in range(n):
         if i % (n/100) == 0:
             print i/(n/100), '% complete'
         my_phase = uniform(min_phase, max_phase)
-        my_obsflux_Ia = obsflux_Ia(filter, z_array[i], my_phase)
+        my_obsflux_Ia, my_p_Ia, my_salt_name, my_salt_version = obsflux_Ia(
+            filter, z_array[i], my_phase)
         type_Ia_flux[i] = my_obsflux_Ia
+        p_Ia.append(my_p_Ia)
+        salt_name.append(my_salt_name)
+        salt_version.append(my_salt_version)
 
-        my_obsflux_Ibc = obsflux_cc(filter, z_array[i], 'Ibc', all_model_Ibc)
+        my_obsflux_Ibc, my_p_Ibc = obsflux_cc(filter, z_array[i], 'Ibc',
+                                              all_model_Ibc)
         type_Ibc_flux[i] = my_obsflux_Ibc
+        p_Ibc.append(my_p_Ibc)
 
-        my_obsflux_II = obsflux_cc(filter, z_array[i], 'II', all_model_II)
+        my_obsflux_II, my_p_II = obsflux_cc(filter, z_array[i], 'II',
+                                            all_model_II)
         type_II_flux[i] = my_obsflux_II
+        p_II.append(my_p_II)
 
-    if my_z is None:
+    if z is None:
         new_fname = files_dir + '/' + filter + '_mc.gz'
-        keys = ['type_Ia_flux', 'type_Ibc_flux', 'type_II_flux', 'z', 'filter']
-        values = [type_Ia_flux, type_Ibc_flux, type_II_flux, z_array, filter]
+        keys = ['type_Ia_flux', 'type_Ia_params', 'type_Ibc_flux',
+                'type_Ibc_params', 'type_II_flux', 'type_II_params', 'z',
+                'filter', 'salt_name', 'salt_version']
+        values = [type_Ia_flux, p_Ia, type_Ibc_flux, p_Ibc, type_II_flux, p_II,
+                  z_array, filter, salt_name, salt_version]
 
     else:
         fname = files_dir + '/z%0.2f' % z_array[i] + '_' + filter + '_mc.gz'
         # now we want to remove the dot
         i = fname.index('.')
         new_fname = fname[:i] + fname[i+1:]
-
-        keys = ['type_Ia_flux', 'type_Ibc_flux', 'type_II_flux', 'filter']
-        values = [type_Ia_flux, type_Ibc_flux, type_II_flux, filter]
+        keys = ['type_Ia_flux', 'type_Ia_params', 'type_Ibc_flux',
+                'type_Ibc_params', 'type_II_flux', 'type_II_params', 'filter',
+                'salt_name', 'salt_version']
+        values = [type_Ia_flux, p_Ia, type_Ibc_flux, p_Ibc, type_II_flux, p_II,
+                  filter, salt_name, salt_version]
     mc = dict(zip(keys, values))
     # pickle.dump( montecarlo, open( new_fname, 'wb'))
     save_file(mc, new_fname)
     return()
-'''
-for i in np.arange(2.00, 0.5, -0.05):
-    start = time.time()
-    mc_file(1000, 'uvf814w', -5., 0., i)
-    print 'It took', time.time() - start, 'seconds.'
 
-for i in np.arange(2.00, 0.5, -0.05):
-    start = time.time()
-    mc_file(1000, 'f105w', -5., 0., i)
-    print 'It took', time.time() - start, 'seconds.'
+phases = [[-10., -5.], [-5., 0.], [0., 5.], [5., 10.]]
+for phase in phases:
+    for i in np.arange(2.00, 0.5, -0.05):
+        start = time.time()
+        mc_file(1000, 'uvf814w', phase[0], phase[1], i)
+        print 'It took', time.time() - start, 'seconds.'
 
-for i in np.arange(2.00, 0.5, -0.05):
-    start = time.time()
-    mc_file(1000, 'f140w', -5., 0, i)
-    print 'It took', time.time() - start, 'seconds.'
+    for i in np.arange(2.00, 0.5, -0.05):
+        start = time.time()
+        mc_file(1000, 'f105w', phase[0], phase[1], i)
+        print 'It took', time.time() - start, 'seconds.'
 
-for i in np.arange(2.00, 0.5, -0.05):
-    start = time.time()
-    mc_file(1000, 'f160w', 0., 5., i)
-    print 'It took', time.time() - start, 'seconds.'
+    for i in np.arange(2.00, 0.5, -0.05):
+        start = time.time()
+        mc_file(1000, 'f140w', phase[0], phase[1], i)
+        print 'It took', time.time() - start, 'seconds.'
+
+    for i in np.arange(2.00, 0.5, -0.05):
+        start = time.time()
+        mc_file(1000, 'f160w', phase[0], phase[1], i)
+        print 'It took', time.time() - start, 'seconds.'
 '''
 start = time.time()
-mc_file(10000, 'f105w', 0., 5., photo_z_file='zprob_v0.06_09.000129')
+#mc_file(1000, 'f105w', 0., 5., photo_z_file='zprob_v0.06_09.000129')
+mc_file(1000, 'f105w', 0., 5., z=1.23)
 print 'It took', time.time() - start, 'seconds.'
+'''

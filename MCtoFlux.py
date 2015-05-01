@@ -1,20 +1,8 @@
 import numpy as np
-import gzip
-import cPickle
-from scipy import stats
+from load import load, mask
 
 
-def load(filename):
-    """Loads a compressed object from disk"""
-    file = gzip.GzipFile(filename, 'rb')
-    object = cPickle.load(file)
-    file.close()
-    return object
 
-def mask(flux):
-        outlier_mask = flux < np.percentile(flux, 95)
-        flux = flux[outlier_mask]
-        return flux
 
 def get_fluxes(my_dir, file_dir, filter1, filter2, filter3, z):
     file_z = str(z)

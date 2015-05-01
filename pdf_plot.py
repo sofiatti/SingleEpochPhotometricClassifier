@@ -43,7 +43,7 @@ def plot(my_dir, files_dir, pdf_Ia, pdf_Ibc, pdf_II, z, my_title,
     print files_dir
     print file_name
     plt.show()
-  #  plt.savefig(my_dir + files_dir + file_name)
+    #  plt.savefig(my_dir + files_dir + file_name)
     plt.close()
 
 

@@ -137,7 +137,7 @@ def survival(my_dir, file_dir, filter1, filter2, filter3, flux_filter1,
                            filter3, flux_filter1, flux_filter2, flux_filter3)
 
     sns.set(style="darkgrid", palette="muted")
-    sns.set_context("paper", font_scale=1.5, rc={"lines.linewidth": 2.5})
+    sns.set_context("notebook", font_scale=2, rc={"lines.linewidth": 2.5})
     plt.plot(z, survival)
     plt.title('Survival Function')
     plt.xlabel('z')
@@ -190,6 +190,11 @@ def random_forest(my_dir, file_dir, filter1, filter2, filter3, flux_filter1,
     return rf, z
 
 
+def set_plot(ax, title):
+    ax.set_title(title)
+    ax.legend(['Type Ia', 'Type Ib/c', 'Type II'], loc='upper right')
+
+
 def combined(final_pdf, my_dir, file_dir, filter1, filter2, filter3,
              flux_filter1, flux_filter2, flux_filter3, photo_z_type,
              photo_z_file=None, photo_z_redshift_file=None, mu=None,
@@ -229,10 +234,11 @@ def combined(final_pdf, my_dir, file_dir, filter1, filter2, filter3,
 
         product = np.multiply(rf, sf)
         product = product.T
+
         # norm_product = product/product.sum()
 
     elif final_pdf == 'RF+photoz':
-        title = 'Random Forest & Photo-z'
+        title = ['Random Forest', 'Photo-z']
         save_name = 'random_photoz'
 
         rf, z = random_forest(my_dir, file_dir, filter1, filter2, filter3,
@@ -247,6 +253,27 @@ def combined(final_pdf, my_dir, file_dir, filter1, filter2, filter3,
         product = np.multiply(rf.T, photo_z)
         product = product.T
         # norm_product = product/product.sum()
+        sns.set(style="darkgrid", palette="muted")
+        sns.set_context("paper", font_scale=2, rc={"lines.linewidth": 2.5})
+
+        f, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, sharex='col',
+                                                   figsize=(15, 15))
+        ax1.plot(z, rf)
+        set_plot(ax1, title[0])
+        ax1.set_xlabel('z')
+        ax1.set_ylabel('PDF')
+        ax3.plot(z, photo_z)
+        set_plot(ax3, title[1])
+        ax3.set_xlabel('z')
+        ax3.set_ylabel('PDF')
+        ax4.plot(z, product)
+        set_plot(ax4, title[0] + ' & ' + title[1])
+        ax4.set_xlabel('z')
+        ax4.set_ylabel('PDF')
+        plt.show()
+        f.savefig('full_fig.png')
+        extent = ax4.get_window_extent().transformed(f.dpi_scale_trans.inverted())
+        f.savefig('ax2_figure_expanded.png', bbox_inches=extent.expanded(1.1, 1.2))
 
     elif final_pdf == 'SF+photoz':
         title = 'Survival Function & Photo-z'
@@ -260,7 +287,7 @@ def combined(final_pdf, my_dir, file_dir, filter1, filter2, filter3,
                             flux_filter1, flux_filter2, flux_filter3,
                             photo_z_type, photo_z_file, photo_z_redshift_file,
                             mu, sigma)
-        
+
         product = np.multiply(sf.T, photo_z)
         product = product.T
         # norm_product = product/product.sum()
@@ -285,7 +312,7 @@ def combined(final_pdf, my_dir, file_dir, filter1, filter2, filter3,
     sns.set(style="darkgrid", palette="muted")
     sns.set_context("paper", font_scale=1.5, rc={"lines.linewidth": 2.5})
     plt.plot(z, product)
-    plt.title(title)
+    plt.title(title[0] + ' & ' + title[1])
     plt.xlabel('z')
     plt.ylabel('PDF')
     plt.legend(['Type Ia', 'Type Ib/c', 'Type II'], loc='upper right')
