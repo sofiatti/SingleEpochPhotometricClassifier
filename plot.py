@@ -81,8 +81,9 @@ def contour(my_dir, file_dir, filter1, filter2, z, point_flux_filter1,
                       " flux difference (counts/s)",
                       ylabel=filter1.upper() + " flux (counts/s)")
     plt.tight_layout()
-
-    plt.savefig(outdir + filename_filter1[:-5] + filename_filter2[5:-5] +
+    file_z = 100*z
+    file_z = int(file_z)
+    plt.savefig(outdir + 'z%.0f_' % file_z + filter1 + '_' + filter2 + '_' +
                 'contour.png')
     plt.close()
 
@@ -132,7 +133,9 @@ def scatter(my_dir, file_dir, filter1, filter2, z, outdir):
                " flux difference (counts/s)")
     plt.ylabel(filter1.upper() + " flux (counts/s)")
     plt.legend()
-    plt.savefig(outdir + filename_filter1[:-5] + filename_filter2[5:-5] +
+    file_z = 100*z
+    file_z = int(file_z)
+    plt.savefig(outdir + 'z%.0f_' % file_z + filter1 + '_' + filter2 + '_' +
                 'scatter.png')
     plt.close()
 
@@ -157,23 +160,19 @@ def plot(x, y, ylabel, title, outdir, outname=None):
 def subplot(x, y, title, outdir, title_photoz=None):
     ''' x, y and title are arrays
     '''
+    new_title = [s for s in title if s]
     # Getting a title for the final PDF composed from the other names
-    if len(title) == 3:
+    if sum(1 for x in title if x) == 3:
         final_title = title[0] + ' & ' + title[1] + ' & ' + title[2]
-    elif len(title) == 2:
-        final_title = title[0] + ' & ' + title[1]
+        plot_name = title[0] + '_' + title[1] + '_' + title[2]
+    elif sum(1 for x in title if x) == 2:
+        final_title = new_title[0] + ' & ' + new_title[1]
+        plot_name = new_title[0] + '_' + new_title[1]
     else:
-        final_title = title[0]
+        final_title = new_title[0]
+        plot_name = new_title[0]
+        
     # Getting a plot name for the final PDF composed from the other names
-    plot_name = ''
-    i = 0
-    while i < len(title):
-        plot_name += title[i]
-        if i < (sum(1 for x in title if x) - 1):
-            if title[i]:
-                print 'title[i] is' + title[i]
-                plot_name += '_'
-        i += 1
     plot_name = plot_name.replace(' ', '-')
     plot_name = plot_name.lower()
 
@@ -237,9 +236,8 @@ def combined(final_pdf, my_dir, file_dir, filter1, filter2,
             title_photoz = ("Photo-z: Gaussian( mu=%.2f, sigma=%.2f)"
                             % (mu, sigma))
 
-    plt.clf()
-
     if final_pdf == 'RF+SF+photoz':
+        plt.clf()
         title = ['Random Forest', 'Survival Function', 'Photo-z']
         plot(z, rf, 'PDF', 'Random Forest', outdir)
         plot(z, sf, '1 - CDF', 'Survival Function', outdir)
@@ -254,6 +252,7 @@ def combined(final_pdf, my_dir, file_dir, filter1, filter2,
         # norm_product = product/product.sum()
 
     elif final_pdf == 'RF+SF':
+        plt.clf()
         title = ['Random Forest', 'Survival Function', '']
         plot(z, rf, 'PDF', 'Random Forest', outdir)
         plot(z, sf, '1 - CDF', 'Survival Function', outdir)
@@ -266,6 +265,7 @@ def combined(final_pdf, my_dir, file_dir, filter1, filter2,
         # norm_product = product/product.sum()
 
     elif final_pdf == 'RF+photoz':
+        plt.clf()
         title = ['Random Forest', '', 'Photo-z']
         plot(z, rf, 'PDF', 'Random Forest', outdir)
         plot(z, photo_z, 'PDF', title_photoz, outdir, outname='photoz')
@@ -279,6 +279,7 @@ def combined(final_pdf, my_dir, file_dir, filter1, filter2,
         subplot(x, y, title, outdir, title_photoz)
 
     elif final_pdf == 'SF+photoz':
+        plt.clf()
         title = ['', 'Survival Function', 'Photo-z']
         plot(z, sf, '1 - CDF', 'Survival Function', outdir)
         plot(z, photo_z, 'PDF', title_photoz, outdir, outname='photoz')
@@ -292,13 +293,16 @@ def combined(final_pdf, my_dir, file_dir, filter1, filter2,
         subplot(x, y, title, outdir, title_photoz)
 
     elif final_pdf == 'RF':
+        plt.clf()
         plot(z, rf, 'PDF', 'Random Forest', outdir)
         sys.exit(0)
 
     elif final_pdf == 'SF':
+        plt.clf()
         plot(z, sf, '1 - CDF', 'Survival Function', outdir)
         sys.exit(0)
 
     elif final_pdf == 'photoz':
+        plt.clf()
         plot(z, photo_z, 'PDF', title_photoz, outdir, outname='photoz')
         sys.exit(0)
