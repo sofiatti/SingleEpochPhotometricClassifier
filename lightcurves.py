@@ -276,8 +276,8 @@ def plot_Ibc(z, hostebv_Ibc, filters, dates,
     fig.set_size_inches(18.5, 12.5)
 
 
-def plot_II(z, hostebv_II, filters, dates, data_flux_filter1, data_flux_filter1_err,
-            data_flux_filter2, data_flux_filter2_err,
+def plot_II(z, hostebv_II, filters, dates, data_flux_filter1,
+            data_flux_filter1_err, data_flux_filter2, data_flux_filter2_err,
             data_flux_filter3, data_flux_filter3_err, phase):
     model_II = ['s11-2005lc', 's11-2005gi', 's11-2006jl', 'nugent-sn2p',
                 'snana-2004hx', 'snana-2005gi', 'snana-2006gq',
@@ -307,10 +307,9 @@ def plot_II(z, hostebv_II, filters, dates, data_flux_filter1, data_flux_filter1_
     lightcurve_20 = lightcurve_II('uvf814w', z, hostebv_II)
 
     for i in range(len(model_II)):
-        ax1.plot(lightcurve_00[model_II[i]][1], lightcurve_00[model_II[i]][0])
+        ax1.plot(lightcurve_00[model_II[i]][1], lightcurve_00[model_II[i]][0]),
         ax1.errorbar(all_phase0, data_flux_filter1, xerr=0,
-                     yerr=data_flux_filter1_err, fmt='o',
-                     c='k')
+                     yerr=data_flux_filter1_err, fmt='o', c='k')
 
     ax1.set_ylabel('Flux (counts/s)', size=14)
     ax1.set_title('F140W', size=14)
