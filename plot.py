@@ -82,8 +82,9 @@ def contour(my_dir, file_dir, filter1, filter2, z, point_flux_filter1,
     plt.tight_layout()
     file_z = 100*z
     file_z = int(file_z)
-    plt.savefig(outdir + 'z%.0f_' % file_z + filter1 + '_' + filter2 + '_' +
-                'contour.png')
+    plt.show()
+    # plt.savefig(outdir + 'z%.0f_' % file_z + filter1 + '_' + filter2 + '_' +
+    #            'contour.png')
     plt.close()
 
 
@@ -134,8 +135,9 @@ def scatter(my_dir, file_dir, filter1, filter2, z, outdir):
     plt.legend()
     file_z = 100*z
     file_z = int(file_z)
-    plt.savefig(outdir + 'z%.0f_' % file_z + filter1 + '_' + filter2 + '_' +
-                'scatter.png')
+    plt.show()
+    #plt.savefig(outdir + 'z%.0f_' % file_z + filter1 + '_' + filter2 + '_' +
+    #            'scatter.png')
     plt.close()
 
 
@@ -152,7 +154,8 @@ def plot(x, y, ylabel, title, outdir, outname=None):
     plt.xlabel('z')
     plt.ylabel(ylabel)
     plt.legend(['Type Ia', 'Type Ib/c', 'Type II'], loc='upper right')
-    plt.savefig(outdir + plot_name + '.png')
+    plt.show()
+    # plt.savefig(outdir + plot_name + '.png')
     plt.close()
 
 
@@ -202,7 +205,8 @@ def subplot(x, y, title, outdir, title_photoz=None):
     ax4.set_title(final_title)
     ax4.legend(['Type Ia', 'Type Ib/c', 'Type II'], loc='upper right')
     ax4.set_xlabel('z')
-    plt.savefig(outdir + plot_name + '.png')
+    plt.show()
+    # plt.savefig(outdir + plot_name + '.png')
     plt.close()
 
 
@@ -213,8 +217,7 @@ def combined(final_pdf, my_dir, file_dir, filter1, filter2,
 
     if not os.path.isfile(outdir + arrays_file):
         save_arrays(my_dir, file_dir, filter1, filter2, filter3, flux_filter1,
-                    flux_filter2, flux_filter3, outdir, photo_z_type,
-                    photo_z_file, photo_z_redshift_file, mu, sigma)
+                    flux_filter2, flux_filter3, outdir)
 
     my_dict = load(outdir + arrays_file)
     rf = my_dict['rf']
