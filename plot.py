@@ -79,6 +79,8 @@ def contour(my_dir, file_dir, filter1, filter2, z, point_flux_filter1,
     g.set_axis_labels(xlabel=filter2.upper() + " - " + filter1.upper() +
                       " flux difference (counts/s)",
                       ylabel=filter1.upper() + " flux (counts/s)")
+    g.ax_joint.annotate('z=%.2f' % z, xy=(0.75, 0.85), xycoords='axes fraction',
+                        size=14)
     plt.tight_layout()
     file_z = 100*z
     file_z = int(file_z)
@@ -136,7 +138,7 @@ def scatter(my_dir, file_dir, filter1, filter2, z, outdir):
     file_z = 100*z
     file_z = int(file_z)
     plt.show()
-    #plt.savefig(outdir + 'z%.0f_' % file_z + filter1 + '_' + filter2 + '_' +
+    # plt.savefig(outdir + 'z%.0f_' % file_z + filter1 + '_' + filter2 + '_' +
     #            'scatter.png')
     plt.close()
 
@@ -173,7 +175,7 @@ def subplot(x, y, title, outdir, title_photoz=None):
     else:
         final_title = new_title[0]
         plot_name = new_title[0]
-        
+
     # Getting a plot name for the final PDF composed from the other names
     plot_name = plot_name.replace(' ', '-')
     plot_name = plot_name.lower()
@@ -205,6 +207,11 @@ def subplot(x, y, title, outdir, title_photoz=None):
     ax4.set_title(final_title)
     ax4.legend(['Type Ia', 'Type Ib/c', 'Type II'], loc='upper right')
     ax4.set_xlabel('z')
+    # Saving combined plot
+    extent = ax2.get_window_extent().transformed(f.dpi_scale_trans.inverted())
+    f.savefig(outdir + plot_name + '_single.png',
+              bbox_inches=extent.expanded(1.2, 1.3))
+
     plt.show()
     # plt.savefig(outdir + plot_name + '.png')
     plt.close()
