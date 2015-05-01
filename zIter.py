@@ -24,8 +24,8 @@ def iterator(type, my_dir, file_dir, filter1, filter2, filter3,
     for a in files[0]:
         min_index = a.index('/z') + 2
         my_z.append(a[min_index:min_index + 3])
-        z = np.asarray(my_z, dtype=int)
-        z = np.divide(z, 100.)
+    z = np.asarray(my_z, dtype=int)
+    z = np.divide(z, 100.)
 
     if type == 'RF':
         for i in range(len(files[0])):
