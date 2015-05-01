@@ -295,14 +295,11 @@ def combined(final_pdf, my_dir, file_dir, filter1, filter2,
     elif final_pdf == 'RF':
         plt.clf()
         plot(z, rf, 'PDF', 'Random Forest', outdir)
-        sys.exit(0)
 
     elif final_pdf == 'SF':
         plt.clf()
         plot(z, sf, '1 - CDF', 'Survival Function', outdir)
-        sys.exit(0)
 
     elif final_pdf == 'photoz':
         plt.clf()
         plot(z, photo_z, 'PDF', title_photoz, outdir, outname='photoz')
-        sys.exit(0)
