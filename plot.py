@@ -20,6 +20,10 @@ def contour(my_dir, file_dir, filter1, filter2, z, point_flux_filter1,
             point_flux_filter2_err, outdir):
     """Generates a plot and transforms the figure into an HTML file from the
     montecarlo data. Adds a point to the data"""
+
+    if not os.path.exists(outdir):
+        os.makedirs(outdir)
+
     point_flux_diff = point_flux_filter2 - point_flux_filter1
     point_flux_diff_err = point_flux_filter2_err + point_flux_filter1_err
 
@@ -91,6 +95,10 @@ def contour(my_dir, file_dir, filter1, filter2, z, point_flux_filter1,
 
 
 def scatter(my_dir, file_dir, filter1, filter2, z, outdir):
+
+    if not os.path.exists(outdir):
+        os.makedirs(outdir)
+
     sns.set(style="white", palette="muted")
     sns.set_context("paper", font_scale=1.5, rc={"lines.linewidth": 2.5})
 
@@ -208,9 +216,9 @@ def subplot(x, y, title, outdir, title_photoz=None):
     ax4.legend(['Type Ia', 'Type Ib/c', 'Type II'], loc='upper right')
     ax4.set_xlabel('z')
     # Saving combined plot
-    extent = ax2.get_window_extent().transformed(f.dpi_scale_trans.inverted())
+    extent = ax4.get_window_extent().transformed(f.dpi_scale_trans.inverted())
     f.savefig(outdir + plot_name + '_single.png',
-              bbox_inches=extent.expanded(1.2, 1.3))
+              bbox_inches=extent.expanded(1.3, 1.3))
 
     plt.show()
     # plt.savefig(outdir + plot_name + '.png')
@@ -221,6 +229,9 @@ def combined(final_pdf, my_dir, file_dir, filter1, filter2,
              filter3, flux_filter1, flux_filter2, flux_filter3, outdir,
              arrays_file, photo_z_type=None, photo_z_file=None,
              photo_z_redshift_file=None, mu=None, sigma=None):
+
+    if not os.path.exists(outdir):
+        os.makedirs(outdir)
 
     if not os.path.isfile(outdir + arrays_file):
         save_arrays(my_dir, file_dir, filter1, filter2, filter3, flux_filter1,
