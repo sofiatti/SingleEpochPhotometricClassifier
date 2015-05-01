@@ -180,9 +180,9 @@ def plot_Ia(z, x1, c, filters, dates, data_flux_filter1, data_flux_filter1_err,
     ax1.annotate('Type Ia', xy=(0.75, 0.85), xycoords='axes fraction', size=14)
     ax1.annotate('z=%.2f' % z, xy=(0.75, 0.75), xycoords='axes fraction',
                  size=14)
-    ax1.annotate('x0=%.2E' % x0_0, xy=(0.70, 0.65), xycoords='axes fraction',
+    ax1.annotate('x0=%.1E' % x0_0, xy=(0.60, 0.65), xycoords='axes fraction',
                  size=14)
-    ax1.annotate(salt_name_0 + '-' + salt_version_0, xy=(0.15, 0.85),
+    ax1.annotate(salt_name_0 + '-' + salt_version_0, xy=(0.05, 0.85),
                  xycoords='axes fraction', size=14)
 
     ax2.plot(lightcurve_10['phase_array'], lightcurve_10['obsflux'])
@@ -193,9 +193,9 @@ def plot_Ia(z, x1, c, filters, dates, data_flux_filter1, data_flux_filter1_err,
     ax2.annotate('Type Ia', xy=(0.75, 0.85), xycoords='axes fraction', size=14)
     ax2.annotate('z=%.2f' % z, xy=(0.75, 0.75), xycoords='axes fraction',
                  size=14)
-    ax2.annotate('x0=%.2E' % x0_1, xy=(0.70, 0.65), xycoords='axes fraction',
+    ax2.annotate('x0=%.1E' % x0_1, xy=(0.60, 0.65), xycoords='axes fraction',
                  size=14)
-    ax1.annotate(salt_name_1 + '-' + salt_version_1, xy=(0.15, 0.85),
+    ax1.annotate(salt_name_1 + '-' + salt_version_1, xy=(0.05, 0.85),
                  xycoords='axes fraction', size=14)
 
     ax3.plot(lightcurve_20['phase_array'], lightcurve_20['obsflux'])
@@ -206,9 +206,9 @@ def plot_Ia(z, x1, c, filters, dates, data_flux_filter1, data_flux_filter1_err,
     ax3.annotate('Type Ia', xy=(0.75, 0.85), xycoords='axes fraction', size=14)
     ax3.annotate('z=%.2f' % z, xy=(0.75, 0.75), xycoords='axes fraction',
                  size=14)
-    ax3.annotate('x0=%.2E' % x0_2, xy=(0.70, 0.65), xycoords='axes fraction',
+    ax3.annotate('x0=%.1E' % x0_2, xy=(0.60, 0.65), xycoords='axes fraction',
                  size=14)
-    ax1.annotate(salt_name_2 + '-' + salt_version_2, xy=(0.15, 0.85),
+    ax1.annotate(salt_name_2 + '-' + salt_version_2, xy=(0.05, 0.85),
                  xycoords='axes fraction', size=14)
 
     fig = plt.gcf()
