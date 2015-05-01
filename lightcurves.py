@@ -195,7 +195,7 @@ def plot_Ia(z, x1, c, filters, dates, data_flux_filter1, data_flux_filter1_err,
                  size=14)
     ax2.annotate('x0=%.1E' % x0_1, xy=(0.65, 0.65), xycoords='axes fraction',
                  size=14)
-    ax1.annotate(salt_name_1 + '-' + salt_version_1, xy=(0.05, 0.85),
+    ax2.annotate(salt_name_1 + '-' + salt_version_1, xy=(0.05, 0.85),
                  xycoords='axes fraction', size=14)
 
     ax3.plot(lightcurve_20['phase_array'], lightcurve_20['obsflux'])
@@ -208,7 +208,7 @@ def plot_Ia(z, x1, c, filters, dates, data_flux_filter1, data_flux_filter1_err,
                  size=14)
     ax3.annotate('x0=%.1E' % x0_2, xy=(0.65, 0.65), xycoords='axes fraction',
                  size=14)
-    ax1.annotate(salt_name_2 + '-' + salt_version_2, xy=(0.05, 0.85),
+    ax3.annotate(salt_name_2 + '-' + salt_version_2, xy=(0.05, 0.85),
                  xycoords='axes fraction', size=14)
 
     fig = plt.gcf()
