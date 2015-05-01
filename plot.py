@@ -1,4 +1,3 @@
-import sys
 import os.path
 import numpy as np
 import seaborn as sns
