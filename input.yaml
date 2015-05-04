@@ -16,16 +16,16 @@ flux_filter3: 0.94
 flux_filter3_err: 0.186868947475
 
 photoz_type:
-    - file:
-        - enable: yes
-        - file_name: 'zprob_v0.06_09.000129'
-    - gauss: 
-        - enable: no
-        - mu: 1.4
-        - sigma: 0.2
-    - ignore_photoz: no
+    file:
+        enable: yes
+        file_name: 'zprob_v0.06_09.000129'
+    gauss: 
+        enable: no
+        mu: 1.4
+        sigma: 0.2
+    ignore_photoz: no
 
 final_pdf: 
-    - RF: no
-    - SF: yes
-    - photoz: yes
+    RF: no
+    SF: yes
+    photoz: yes
