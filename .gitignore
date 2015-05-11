@@ -4,6 +4,8 @@
 /notebooks/*
 #!/notebooks/foo
 
-/rf_sf_pz/*
+/rf_sf_pz/build
+/rf_sf_pz/dist
+/rf_sf_pz/rf_sf_pz.egg-info
 !/rf_sf_pz/rf_sf_pz
 /rf_sf_pz/rf_sf_pz/*.pyc
