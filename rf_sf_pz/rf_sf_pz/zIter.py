@@ -43,9 +43,10 @@ def iterator(type, my_dir, file_dir, filter1, filter2, filter3,
                                          flux_filter2_err, flux_filter3_err,
                                          z[i])
             quant.append(survival_f)
+
     elif type == 'photo_z':
         if photo_z_type == 'file':
-            photo_z_file = my_dir + photo_z_file
+            photo_z_file = photo_z_file
             photo_z = find_photo_z(photo_z_type, photo_z_file,
                                    photo_z_redshift_file, z, mu, sigma)
         elif photo_z_type == 'gauss':
