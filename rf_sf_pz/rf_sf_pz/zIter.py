@@ -8,7 +8,8 @@ from photo_z import find_photo_z
 
 
 def iterator(type, my_dir, file_dir, filter1, filter2, filter3,
-             flux_filter1, flux_filter2, flux_filter3, photo_z_type=None,
+             flux_filter1, flux_filter2, flux_filter3, flux_filter1_err,
+             flux_filter2_err, flux_filter3_err, photo_z_type=None,
              photo_z_file=None, photo_z_redshift_file=None, mu=None,
              sigma=None):
     ''' type: RF (random forest)
@@ -38,7 +39,9 @@ def iterator(type, my_dir, file_dir, filter1, filter2, filter3,
         for i in range(len(files[0])):
             survival_f = find_percentile(my_dir, file_dir, filter1, filter2,
                                          filter3, flux_filter1, flux_filter2,
-                                         flux_filter3, z[i])
+                                         flux_filter3, flux_filter1_err,
+                                         flux_filter2_err, flux_filter3_err,
+                                         z[i])
             quant.append(survival_f)
     elif type == 'photo_z':
         if photo_z_type == 'file':
@@ -61,13 +64,16 @@ def save_file(object, filename, protocol=-1):
 
 
 def save_arrays(my_dir, file_dir, filter1, filter2, filter3, flux_filter1,
-                flux_filter2, flux_filter3, outdir):
+                flux_filter2, flux_filter3, flux_filter1_err,
+                flux_filter2_err, flux_filter3_err, outdir):
 
     rf, rf_z = iterator('RF', my_dir, file_dir, filter1, filter2, filter3,
-                        flux_filter1, flux_filter2, flux_filter3)
+                        flux_filter1, flux_filter2, flux_filter3,
+                        flux_filter1_err, flux_filter2_err, flux_filter3_err)
 
     sf, sf_z = iterator('survival', my_dir, file_dir, filter1, filter2,
-                        filter3, flux_filter1, flux_filter2, flux_filter3)
+                        filter3, flux_filter1, flux_filter2, flux_filter3,
+                        flux_filter1_err, flux_filter2_err, flux_filter3_err)
 
     keys = ['rf', 'rf_z',
             'sf', 'sf_z',

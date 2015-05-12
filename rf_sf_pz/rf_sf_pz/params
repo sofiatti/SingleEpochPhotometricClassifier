@@ -45,6 +45,9 @@ filter3 = var['filter3']
 flux_filter1 = var['flux_filter1']
 flux_filter2 = var['flux_filter2']
 flux_filter3 = var['flux_filter3']
+flux_filter1_err = var['flux_filter1_err']
+flux_filter2_err = var['flux_filter2_err']
+flux_filter3_err = var['flux_filter3_err']
 
 if var['photoz_type']['file']['enable'] == True:
     photo_z_type = 'file'
@@ -82,5 +85,6 @@ final_pdf += final_pdf_array[i]
 
 
 combined(final_pdf, my_dir, file_dir, filter1, filter2, filter3,
-         flux_filter1, flux_filter2, flux_filter3, outdir, arrays_file,
+         flux_filter1, flux_filter2, flux_filter3, flux_filter1_err,
+         flux_filter2_err, flux_filter3_err, outdir, arrays_file,
          photo_z_type, photo_z_file, photo_z_redshift_file, mu, sigma)
