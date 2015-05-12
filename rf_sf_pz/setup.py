@@ -6,12 +6,5 @@ setup(name='rf_sf_pz',
       author='Caroline Sofiatti',
       author_email='c.sofiatti@gmail.com',
       packages=['rf_sf_pz'],
-      install_requirements=[
-          'os.path',
-          'numpy',
-          'seaborn',
-          'matplotlib.pyplot',
-          'zIter',
-          'load',
-      ],
+      scripts=['scripts/params'],
       zip_safe=False)
