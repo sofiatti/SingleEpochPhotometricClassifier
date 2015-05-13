@@ -7,6 +7,28 @@ import time
 import os
 from numpy.random import normal, uniform, choice
 from scipy import io, interpolate, optimize
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument(
+                dest='n', type=int,
+                help='Number of MC itirations ex.:1000')
+parser.add_argument(
+                dest='phase_min', type=int,
+                help='Minimum phase ex.: 0')
+parser.add_argument(
+                dest='phase_max', type=int,
+                help='Minimum phase ex.: 5')
+parser.add_argument(
+                dest='z_max', type=float,
+                help='Maximum redshift ex.: 2')
+parser.add_argument(
+                dest='z_mix', type=float,
+                help='Maximum redshift ex.: 0.5')
+parser.add_argument(
+                dest='z_interval', type=float,
+                help='Redshift interval ex.: 0.05')
+args = parser.parse_args()
 
 my_dir = '/Users/carolinesofiatti/projects/classification/data/'
 
@@ -224,30 +246,32 @@ def mc_file(n, filter, min_phase, max_phase, z=None, photo_z_file=None,
     save_file(mc, new_fname)
     return()
 
-phases = [[-10., -5.], [-5., 0.], [0., 5.], [5., 10.]]
-for phase in phases:
-    for i in np.arange(2.00, 0.5, -0.05):
-        start = time.time()
-        mc_file(1000, 'uvf814w', phase[0], phase[1], i)
-        print 'It took', time.time() - start, 'seconds.'
+all_z = np.arange(args.z_mix, args.z_max + args.z_interval, args.z_interval)
+for i in all_z:
+    start = time.time()
+    mc_file(args.n, 'uvf814w', args.phase_min, args.phase_max, i)
+    print 'It took', time.time() - start, 'seconds.'
 
-    for i in np.arange(2.00, 0.5, -0.05):
-        start = time.time()
-        mc_file(1000, 'f105w', phase[0], phase[1], i)
-        print 'It took', time.time() - start, 'seconds.'
+for i in all_z:
+    start = time.time()
+    mc_file(args.n, 'f105w', args.phase_min, args.phase_max, i)
+    print 'It took', time.time() - start, 'seconds.'
 
-    for i in np.arange(2.00, 0.5, -0.05):
-        start = time.time()
-        mc_file(1000, 'f140w', phase[0], phase[1], i)
-        print 'It took', time.time() - start, 'seconds.'
+for i in all_z:
+    start = time.time()
+    mc_file(args.n, 'f140w', args.phase_min, args.phase_max, i)
+    print 'It took', time.time() - start, 'seconds.'
 
-    for i in np.arange(2.00, 0.5, -0.05):
-        start = time.time()
-        mc_file(1000, 'f160w', phase[0], phase[1], i)
-        print 'It took', time.time() - start, 'seconds.'
+for i in all_z:
+    start = time.time()
+    mc_file(args.n, 'f160w', args.phase_min, args.phase_max, i)
+    print 'It took', time.time() - start, 'seconds.'
 '''
+Think about this one some more:
+
 start = time.time()
-#mc_file(1000, 'f105w', 0., 5., photo_z_file='zprob_v0.06_09.000129')
-mc_file(1000, 'f105w', 0., 5., z=1.23)
+#mc_file(args.n, 'f105w', args.phase_min, args.phase_max,
+         photo_z_file='zprob_v0.06_09.000129')
+mc_file(args.n, 'f105w', 0., 5., z=1.23)
 print 'It took', time.time() - start, 'seconds.'
 '''
