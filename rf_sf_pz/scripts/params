@@ -83,7 +83,6 @@ while i < len(final_pdf_array) - 1:
     i += 1
 final_pdf += final_pdf_array[i]
 
-
 combined(final_pdf, my_dir, file_dir, filter1, filter2, filter3,
          flux_filter1, flux_filter2, flux_filter3, flux_filter1_err,
          flux_filter2_err, flux_filter3_err, outdir, arrays_file,
