@@ -28,9 +28,14 @@ parser.add_argument(
 parser.add_argument(
                 dest='z_interval', type=float,
                 help='Redshift interval ex.: 0.05')
+parser.add_argument(
+                dest='filters', type=list, nargs='?',
+                default=['f105w', 'f140w', 'f160w', 'uvf814w'],
+                help='List of strings where the strings are filter names.')
 args = parser.parse_args()
 
 my_dir = '/Users/carolinesofiatti/projects/classification/data/'
+filters = parser.get_default('filters')
 
 t0 = 0
 hostr_v = 3.1
@@ -71,20 +76,7 @@ def all_mabs(sne_type):
     return(my_mabs[sne_type])
 
 
-def obsflux_Ia(filter, z, my_phase):
-    """Given a filter, redshift z at given phase, generates the observed
-    magnitude for SNe Type Ia"""
-
-    alpha = 0.12
-    beta = 3.
-    x1 = normal(0., 1.)
-    c = normal(0., 0.1)
-    mabs = normal(-19.1 - alpha*x1 + beta*c, scale=0.15)
-    zp = zero_point[filter]
-    zpsys = zero_point['zpsys']
-
-    # Checking if bandpass is outside spectral range for SALT2. If yes,
-    # use salt2-extended.
+def which_salt(z):
     salt_name = 'salt2'
     salt_version = '2.4'
 
@@ -94,12 +86,26 @@ def obsflux_Ia(filter, z, my_phase):
     salt_max_wav = (1 + z) * rest_salt_max_wav
     salt_min_wav = (1 + z) * rest_salt_min_wav
 
-    band = sncosmo.get_bandpass(filter)
-    if (band.wave[0] < salt_min_wav or band.wave[-1] > salt_max_wav):
-        salt_name = 'salt2-extended'
-        salt_version = '1.0'
+    for filter in filters:
+        band = sncosmo.get_bandpass(filter)
+        if (band.wave[0] < salt_min_wav or band.wave[-1] > salt_max_wav):
+            salt_name = 'salt2-extended'
+            salt_version = '1.0'
+            break
+    return salt_name, salt_version
 
-    # Type Ia model
+
+def obsflux_Ia(z, my_phase):
+    """Given a filter, redshift z at given phase, generates the observed
+    magnitude for SNe Type Ia"""
+
+    alpha = 0.12
+    beta = 3.
+    x1 = normal(0., 1.)
+    c = normal(0., 0.1)
+    mabs = normal(-19.1 - alpha*x1 + beta*c, scale=0.15)
+    zpsys = zero_point['zpsys']
+    salt_name, salt_version = which_salt(z)
     model_Ia = sncosmo.Model(source=sncosmo.get_source(salt_name,
                                                        version=salt_version))
     model_Ia.set(z=z)
@@ -108,14 +114,21 @@ def obsflux_Ia(filter, z, my_phase):
     p['x0'] = model_Ia.get('x0')
     model_Ia.set(**p)
     phase = my_phase + model_Ia.source.peakphase('bessellb')
-    obsflux_Ia = model_Ia.bandflux(filter, t0+(phase * (1+z)), zp, zpsys)
-    return obsflux_Ia, p, salt_name, salt_version
+
+    keys = filters
+    values = np.zeros(len(filters))
+    all_obsflux_Ia = dict(zip(keys, values))
+
+    for filter in filters:
+        zp = zero_point[filter]
+        obsflux_Ia = model_Ia.bandflux(filter, t0+(phase * (1+z)), zp, zpsys)
+        all_obsflux_Ia[filter] = obsflux_Ia
+    return all_obsflux_Ia, p, salt_name, salt_version
 
 
-def obsflux_cc(filter, z, sn_type, all_model):
+def obsflux_cc(z, sn_type, all_model):
     """Given a filter and redshift z, generates the observed
     magnitude for SNe Type Ibc or Type II"""
-    zp = zero_point[filter]
     zpsys = zero_point['zpsys']
     my_model = choice(all_model)
     if my_model in ['s11-2004hx', 'nugent-sn2l']:
@@ -133,8 +146,15 @@ def obsflux_cc(filter, z, sn_type, all_model):
     model.set(**p_core_collapse)
     my_phase = uniform(0., 5.)
     phase = my_phase + model.source.peakphase('bessellb')
-    obsflux = model.bandflux(filter, t0+(phase * (1+z)), zp, zpsys)
-    return obsflux, p_core_collapse
+
+    keys = filters
+    values = np.zeros(len(filters))
+    all_obsflux = dict(zip(keys, values))
+    for filter in filters:
+        zp = zero_point[filter]
+        obsflux = model.bandflux(filter, t0+(phase * (1+z)), zp, zpsys)
+        all_obsflux[filter] = obsflux
+    return all_obsflux, p_core_collapse
 
 
 def save_file(object, filename, protocol=-1):
@@ -153,7 +173,6 @@ def z_from_photo_z(photo_z_file, n, my_z_array=None):
     else:
         z = my_z_array
     if np.shape(pz) != np.shape(z):
-        print np.shape(pz),  np.shape(z)
         raise ValueError("p_z array and z array are different sizes")
     dz = z[1] - z[0]
     pz /= (dz * pz).sum()
@@ -173,7 +192,7 @@ def z_from_photo_z(photo_z_file, n, my_z_array=None):
     return out_z
 
 
-def mc_file(n, filter, min_phase, max_phase, z=None, photo_z_file=None,
+def mc_file(n, min_phase, max_phase, z=None, photo_z_file=None,
             z_for_photo_z_file=None):
     """Returns 3 arrays. For each SNe type, returns an array with the observed
     filter flux.
@@ -190,10 +209,9 @@ def mc_file(n, filter, min_phase, max_phase, z=None, photo_z_file=None,
     if not os.path.exists(files_dir):
         os.makedirs(files_dir)
 
-    flux = np.zeros((n, 3))
-    type_Ia_flux = flux[:, 0]
-    type_Ibc_flux = flux[:, 1]
-    type_II_flux = flux[:, 2]
+    type_Ia_flux = []
+    type_Ibc_flux = []
+    type_II_flux = []
 
     p_Ia = []
     p_Ibc = []
@@ -206,25 +224,26 @@ def mc_file(n, filter, min_phase, max_phase, z=None, photo_z_file=None,
         if i % (n/100) == 0:
             print i/(n/100), '% complete'
         my_phase = uniform(min_phase, max_phase)
+
         my_obsflux_Ia, my_p_Ia, my_salt_name, my_salt_version = obsflux_Ia(
-            filter, z_array[i], my_phase)
-        type_Ia_flux[i] = my_obsflux_Ia
+                        z_array[i], my_phase)
+        type_Ia_flux.append(my_obsflux_Ia)
         p_Ia.append(my_p_Ia)
         salt_name.append(my_salt_name)
         salt_version.append(my_salt_version)
 
-        my_obsflux_Ibc, my_p_Ibc = obsflux_cc(filter, z_array[i], 'Ibc',
+        my_obsflux_Ibc, my_p_Ibc = obsflux_cc(z_array[i], 'Ibc',
                                               all_model_Ibc)
-        type_Ibc_flux[i] = my_obsflux_Ibc
+        type_Ibc_flux. append(my_obsflux_Ibc)
         p_Ibc.append(my_p_Ibc)
 
-        my_obsflux_II, my_p_II = obsflux_cc(filter, z_array[i], 'II',
+        my_obsflux_II, my_p_II = obsflux_cc(z_array[i], 'II',
                                             all_model_II)
-        type_II_flux[i] = my_obsflux_II
+        type_II_flux.append(my_obsflux_II)
         p_II.append(my_p_II)
 
     if z is None:
-        new_fname = files_dir + '/' + filter + '_mc.gz'
+        new_fname = files_dir + '/simulated_mc.gz'
         keys = ['type_Ia_flux', 'type_Ia_params', 'type_Ibc_flux',
                 'type_Ibc_params', 'type_II_flux', 'type_II_params', 'z',
                 'filter', 'salt_name', 'salt_version']
@@ -232,7 +251,7 @@ def mc_file(n, filter, min_phase, max_phase, z=None, photo_z_file=None,
                   z_array, filter, salt_name, salt_version]
 
     else:
-        fname = files_dir + '/z%0.2f' % z_array[i] + '_' + filter + '_mc.gz'
+        fname = files_dir + '/z%0.2f' % z_array[i] + '_simulated_mc.gz'
         # now we want to remove the dot
         i = fname.index('.')
         new_fname = fname[:i] + fname[i+1:]
@@ -249,23 +268,9 @@ def mc_file(n, filter, min_phase, max_phase, z=None, photo_z_file=None,
 all_z = np.arange(args.z_mix, args.z_max + args.z_interval, args.z_interval)
 for i in all_z:
     start = time.time()
-    mc_file(args.n, 'uvf814w', args.phase_min, args.phase_max, i)
+    mc_file(args.n, args.phase_min, args.phase_max, i)
     print 'It took', time.time() - start, 'seconds.'
 
-for i in all_z:
-    start = time.time()
-    mc_file(args.n, 'f105w', args.phase_min, args.phase_max, i)
-    print 'It took', time.time() - start, 'seconds.'
-
-for i in all_z:
-    start = time.time()
-    mc_file(args.n, 'f140w', args.phase_min, args.phase_max, i)
-    print 'It took', time.time() - start, 'seconds.'
-
-for i in all_z:
-    start = time.time()
-    mc_file(args.n, 'f160w', args.phase_min, args.phase_max, i)
-    print 'It took', time.time() - start, 'seconds.'
 '''
 Think about this one some more:
 
