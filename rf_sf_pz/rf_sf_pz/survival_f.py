@@ -1,6 +1,6 @@
 import numpy as np
 from scipy import stats
-from load import load, mask
+from load import load, get_dict
 
 
 def find_nearest(array, value):
@@ -40,6 +40,14 @@ def kde3d(x, y, z, data_point):
     return (percentile)
 
 
+def add_error(my_dict, filter, flux_filter_err):
+    my_dict[filter] += np.random.normal(
+                                loc=0,
+                                scale=flux_filter_err,
+                                size=np.shape(my_dict[filter]))
+    return my_dict[filter]
+
+
 def find_percentile(my_dir, file_dir, filter1, filter2, filter3, flux_filter1,
                     flux_filter2, flux_filter3, flux_filter1_err,
                     flux_filter2_err, flux_filter3_err, z):
@@ -52,60 +60,32 @@ def find_percentile(my_dir, file_dir, filter1, filter2, filter3, flux_filter1,
     file_z = '%.0f' % z
     if len(file_z) < 3:
         file_z = '0' + file_z
-    dict_filter1 = load(my_dir + file_dir + 'z' + file_z + '_' + filter1 +
-                        '_mc.gz')
-    dict_filter2 = load(my_dir + file_dir + 'z' + file_z + '_' + filter2 +
-                        '_mc.gz')
-    dict_filter3 = load(my_dir + file_dir + 'z' + file_z + '_' + filter3 +
-                        '_mc.gz')
+    list_flux_dict = load(my_dir + file_dir + 'z' + file_z +
+                          '_simulated_mc.gz')
+    type_Ia_flux_dict = get_dict(list_flux_dict['type_Ia_flux'])
+    type_Ibc_flux_dict = get_dict(list_flux_dict['type_Ibc_flux'])
+    type_II_flux_dict = get_dict(list_flux_dict['type_II_flux'])
 
-    dict_filter1['type_Ia_flux'] += np.random.normal(
-                                loc=0,
-                                scale=flux_filter1_err,
-                                size=np.shape(dict_filter1['type_Ia_flux']))
-    type_Ia_flux_filter1 = mask(dict_filter1['type_Ia_flux'])
-    dict_filter1['type_Ibc_flux'] += np.random.normal(
-                                loc=0,
-                                scale=flux_filter1_err,
-                                size=np.shape(dict_filter1['type_Ibc_flux']))
-    type_Ibc_flux_filter1 = mask(dict_filter1['type_Ibc_flux'])
-    dict_filter1['type_II_flux'] += np.random.normal(
-                                loc=0,
-                                scale=flux_filter1_err,
-                                size=np.shape(dict_filter1['type_II_flux']))
-    type_II_flux_filter1 = mask(dict_filter1['type_II_flux'])
+    type_Ia_flux_filter1 = add_error(type_Ia_flux_dict, filter1,
+                                     flux_filter1_err)
+    type_Ia_flux_filter2 = add_error(type_Ia_flux_dict, filter2,
+                                     flux_filter2_err)
+    type_Ia_flux_filter3 = add_error(type_Ia_flux_dict, filter3,
+                                     flux_filter3_err)
 
-    dict_filter2['type_Ia_flux'] += np.random.normal(
-                                loc=0,
-                                scale=flux_filter2_err,
-                                size=np.shape(dict_filter2['type_Ia_flux']))
-    type_Ia_flux_filter2 = mask(dict_filter2['type_Ia_flux'])
-    dict_filter2['type_Ibc_flux'] += np.random.normal(
-                                loc=0,
-                                scale=flux_filter2_err,
-                                size=np.shape(dict_filter2['type_Ibc_flux']))
-    type_Ibc_flux_filter2 = mask(dict_filter2['type_Ibc_flux'])
-    dict_filter2['type_II_flux'] += np.random.normal(
-                                loc=0,
-                                scale=flux_filter2_err,
-                                size=np.shape(dict_filter2['type_II_flux']))
-    type_II_flux_filter2 = mask(dict_filter2['type_II_flux'])
+    type_Ibc_flux_filter1 = add_error(type_Ibc_flux_dict, filter1,
+                                      flux_filter1_err)
+    type_Ibc_flux_filter2 = add_error(type_Ibc_flux_dict, filter2,
+                                      flux_filter2_err)
+    type_Ibc_flux_filter3 = add_error(type_Ibc_flux_dict, filter3,
+                                      flux_filter3_err)
 
-    dict_filter3['type_Ia_flux'] += np.random.normal(
-                                loc=0,
-                                scale=flux_filter3_err,
-                                size=np.shape(dict_filter3['type_Ia_flux']))
-    type_Ia_flux_filter3 = mask(dict_filter3['type_Ia_flux'])
-    dict_filter3['type_Ibc_flux'] += np.random.normal(
-                                loc=0,
-                                scale=flux_filter3_err,
-                                size=np.shape(dict_filter3['type_Ibc_flux']))
-    type_Ibc_flux_filter3 = mask(dict_filter3['type_Ibc_flux'])
-    dict_filter3['type_II_flux'] += np.random.normal(
-                                loc=0,
-                                scale=flux_filter3_err,
-                                size=np.shape(dict_filter3['type_II_flux']))
-    type_II_flux_filter3 = mask(dict_filter3['type_II_flux'])
+    type_II_flux_filter1 = add_error(type_II_flux_dict, filter1,
+                                     flux_filter1_err)
+    type_II_flux_filter2 = add_error(type_II_flux_dict, filter2,
+                                     flux_filter2_err)
+    type_II_flux_filter3 = add_error(type_II_flux_dict, filter3,
+                                     flux_filter3_err)
 
     Ia_percentile = kde3d(type_Ia_flux_filter1, type_Ia_flux_filter2,
                           type_Ia_flux_filter3, data_point)

@@ -1,7 +1,7 @@
 import pandas as pd
 import copy
 import numpy as np
-from load import load
+from load import load, get_dict
 from sklearn.ensemble import RandomForestClassifier
 
 
@@ -9,24 +9,23 @@ def make_csv(my_dir, file_dir, filter1, filter2, filter3, z):
     file_z = str(z)
     if len(file_z) < 3:
         file_z = '0' + file_z
-    dict_filter1 = load(my_dir + file_dir + 'z' + file_z + '_' + filter1 +
-                        '_mc.gz')
-    dict_filter2 = load(my_dir + file_dir + 'z' + file_z + '_' + filter2 +
-                        '_mc.gz')
-    dict_filter3 = load(my_dir + file_dir + 'z' + file_z + '_' + filter3 +
-                        '_mc.gz')
+    list_flux_dict = load(my_dir + file_dir + 'z' + file_z +
+                          '_simulated_mc.gz')
+    type_Ia_flux_dict = get_dict(list_flux_dict['type_Ia_flux'])
+    type_Ibc_flux_dict = get_dict(list_flux_dict['type_Ibc_flux'])
+    type_II_flux_dict = get_dict(list_flux_dict['type_II_flux'])
 
-    type_Ia_flux_filter1 = dict_filter1['type_Ia_flux']
-    type_Ibc_flux_filter1 = dict_filter1['type_Ibc_flux']
-    type_II_flux_filter1 = dict_filter1['type_II_flux']
+    type_Ia_flux_filter1 = np.asarray(type_Ia_flux_dict[filter1])
+    type_Ia_flux_filter2 = np.asarray(type_Ia_flux_dict[filter2])
+    type_Ia_flux_filter3 = np.asarray(type_Ia_flux_dict[filter3])
 
-    type_Ia_flux_filter2 = dict_filter2['type_Ia_flux']
-    type_Ibc_flux_filter2 = dict_filter2['type_Ibc_flux']
-    type_II_flux_filter2 = dict_filter2['type_II_flux']
+    type_Ibc_flux_filter1 = np.asarray(type_Ibc_flux_dict[filter1])
+    type_Ibc_flux_filter2 = np.asarray(type_Ibc_flux_dict[filter2])
+    type_Ibc_flux_filter3 = np.asarray(type_Ibc_flux_dict[filter3])
 
-    type_Ia_flux_filter3 = dict_filter3['type_Ia_flux']
-    type_Ibc_flux_filter3 = dict_filter3['type_Ibc_flux']
-    type_II_flux_filter3 = dict_filter3['type_II_flux']
+    type_II_flux_filter1 = np.asarray(type_II_flux_dict[filter1])
+    type_II_flux_filter2 = np.asarray(type_II_flux_dict[filter2])
+    type_II_flux_filter3 = np.asarray(type_II_flux_dict[filter3])
 
     flux_filter1 = np.hstack((type_Ia_flux_filter1, type_Ibc_flux_filter1,
                              type_II_flux_filter1))
