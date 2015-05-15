@@ -9,3 +9,4 @@
 /rf_sf_pz/rf_sf_pz.egg-info
 !/rf_sf_pz/rf_sf_pz
 /rf_sf_pz/rf_sf_pz/*.pyc
+/rf_sf_pz/rf_sf_pz/*.yaml
