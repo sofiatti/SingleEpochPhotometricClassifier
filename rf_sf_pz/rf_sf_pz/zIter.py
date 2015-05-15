@@ -19,7 +19,7 @@ def iterator(type, my_dir, file_dir, filter1, filter2, filter3,
     files = []
     my_z = []
     quant = []
-    my_files = glob.glob(my_dir + file_dir + '*' + filter1 + '*.gz')
+    my_files = glob.glob(my_dir + file_dir + '*simulated*.gz')
     files.append(sorted(my_files))
 
     for a in files[0]:
