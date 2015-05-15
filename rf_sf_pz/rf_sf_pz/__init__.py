@@ -251,15 +251,15 @@ def combined(final_pdf, my_dir, file_dir, filter1, filter2,
         photo_z, my_z = iterator('photo_z', my_dir, file_dir, filter1,
                                  filter2, filter3, flux_filter1, flux_filter2,
                                  flux_filter3, flux_filter1_err,
-                                 flux_filter2_err,flux_filter3_err,
+                                 flux_filter2_err, flux_filter3_err,
                                  photo_z_type=photo_z_type,
                                  photo_z_file=photo_z_file,
                                  photo_z_redshift_file=photo_z_redshift_file,
                                  mu=mu, sigma=sigma)
         if photo_z_type == 'file':
-            title_photoz = 'Photo-z from file'
+            title_photoz = 'Galaxy Photo-z from file'
         else:
-            title_photoz = ("Photo-z: Gaussian( mu=%.2f, sigma=%.2f)"
+            title_photoz = ("Galaxy Photo-z: Gaussian( mu=%.2f, sigma=%.2f)"
                             % (mu, sigma))
 
     if final_pdf == 'RF+SF+photoz':
