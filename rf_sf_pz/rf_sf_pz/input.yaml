@@ -1,5 +1,5 @@
 my_dir: "/Users/carolinesofiatti/projects/classification/data/"
-file_dir: "mc_files_1000_-5_0/"
+file_dir: "mc_files_10000_-5_0/"
 outdir: '/Users/carolinesofiatti/projects/classification/data/plots/'
 arrays_file: 'random-forest_survival-function.p'
 
@@ -17,16 +17,16 @@ flux_filter3_err: 0.3
  
 photoz_type:
     file:
-        enable: no
-        file_name: None
+        enable: yes
+        file_name: '/Users/carolinesofiatti/projects/classification/data/plots/SPT2040_SE_09May15.sav'
     gauss: 
         enable: no
         mu: 1.4
         sigma: 0.2
-    ignore_photoz: yes
+    ignore_photoz: no
 
 final_pdf: 
     RF: yes
     SF: yes
-    photoz: no
+    photoz: yes
 
