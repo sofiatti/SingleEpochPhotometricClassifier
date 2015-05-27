@@ -30,15 +30,15 @@ def contour(my_dir, file_dir, filter1, filter2, z, point_flux_filter1,
     filename_filter = file_name(my_dir, file_dir, z)
 
     list_flux_dict = load(filename_filter)
-    
+
     type_Ia_flux = get_dict(list_flux_dict['type_Ia_flux'])
     type_Ibc_flux = get_dict(list_flux_dict['type_Ibc_flux'])
     type_II_flux = get_dict(list_flux_dict['type_II_flux'])
-    
+
     type_Ia_flux_filter1 = np.asarray(type_Ia_flux[filter1])
     type_Ibc_flux_filter1 = np.asarray(type_Ibc_flux[filter1])
     type_II_flux_filter1 = np.asarray(type_II_flux[filter1])
-    
+
     type_Ia_flux_filter2 = np.asarray(type_Ia_flux[filter2])
     type_Ibc_flux_filter2 = np.asarray(type_Ibc_flux[filter2])
     type_II_flux_filter2 = np.asarray(type_II_flux[filter2])
@@ -102,28 +102,28 @@ def scatter(my_dir, file_dir, filter1, filter2, z, outdir):
     sns.set(style="white", palette="muted")
     sns.set_context("paper", font_scale=1.5, rc={"lines.linewidth": 2.5})
 
-    filename_filter1 = file_name(my_dir, file_dir, filter1, z)
-    filename_filter2 = file_name(my_dir, file_dir, filter2, z)
+    filename_filter = file_name(my_dir, file_dir, z)
 
-    dict_filter1 = load(filename_filter1)
-    dict_filter2 = load(filename_filter2)
+    list_flux_dict = load(filename_filter)
 
-    type_Ia_flux_filter1 = dict_filter1['type_Ia_flux']
-    type_Ibc_flux_filter1 = dict_filter1['type_Ibc_flux']
-    type_II_flux_filter1 = dict_filter1['type_II_flux']
-    filter1 = dict_filter1['filter']
+    type_Ia_flux = get_dict(list_flux_dict['type_Ia_flux'])
+    type_Ibc_flux = get_dict(list_flux_dict['type_Ibc_flux'])
+    type_II_flux = get_dict(list_flux_dict['type_II_flux'])
 
-    type_Ia_flux_filter2 = dict_filter2['type_Ia_flux']
-    type_Ibc_flux_filter2 = dict_filter2['type_Ibc_flux']
-    type_II_flux_filter2 = dict_filter2['type_II_flux']
-    filter2 = dict_filter2['filter']
+    type_Ia_flux_filter1 = np.asarray(type_Ia_flux[filter1])
+    type_Ibc_flux_filter1 = np.asarray(type_Ibc_flux[filter1])
+    type_II_flux_filter1 = np.asarray(type_II_flux[filter1])
+
+    type_Ia_flux_filter2 = np.asarray(type_Ia_flux[filter2])
+    type_Ibc_flux_filter2 = np.asarray(type_Ibc_flux[filter2])
+    type_II_flux_filter2 = np.asarray(type_II_flux[filter2])
 
     type_Ia_flux_diff = np.subtract(type_Ia_flux_filter2, type_Ia_flux_filter1)
     type_Ibc_flux_diff = np.subtract(type_Ibc_flux_filter2,
                                      type_Ibc_flux_filter1)
     type_II_flux_diff = np.subtract(type_II_flux_filter2, type_II_flux_filter1)
 
-    flux = np.asarray([type_Ia_flux_filter1, type_Ibc_flux_filter1, type_II_flux_filter1])
+    flux = [type_Ia_flux_filter1, type_Ibc_flux_filter1, type_II_flux_filter1]
     diff = [type_Ia_flux_diff, type_Ibc_flux_diff, type_II_flux_diff]
 
     for i, item in enumerate(flux):
