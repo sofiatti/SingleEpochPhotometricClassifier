@@ -3,15 +3,15 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 from zIter import save_arrays, iterator
-from load import load
+from load import load, get_dict
 
 
-def file_name(my_dir, file_dir, filter, z):
+def file_name(my_dir, file_dir, z):
     z = z * 100
     file_z = '%.0f' % z
     if len(file_z) < 3:
         file_z = '0' + file_z
-    name = my_dir + file_dir + 'z' + file_z + '_' + filter + '_mc.gz'
+    name = my_dir + file_dir + 'z' + file_z + '_' + 'simulated_mc.gz'
     return name
 
 
@@ -27,21 +27,21 @@ def contour(my_dir, file_dir, filter1, filter2, z, point_flux_filter1,
     point_flux_diff = point_flux_filter2 - point_flux_filter1
     point_flux_diff_err = point_flux_filter2_err + point_flux_filter1_err
 
-    filename_filter1 = file_name(my_dir, file_dir, filter1, z)
-    filename_filter2 = file_name(my_dir, file_dir, filter2, z)
+    filename_filter = file_name(my_dir, file_dir, z)
 
-    dict_filter1 = load(filename_filter1)
-    dict_filter2 = load(filename_filter2)
-
-    type_Ia_flux_filter1 = dict_filter1['type_Ia_flux']
-    type_Ibc_flux_filter1 = dict_filter1['type_Ibc_flux']
-    type_II_flux_filter1 = dict_filter1['type_II_flux']
-    filter1 = dict_filter1['filter']
-
-    type_Ia_flux_filter2 = dict_filter2['type_Ia_flux']
-    type_Ibc_flux_filter2 = dict_filter2['type_Ibc_flux']
-    type_II_flux_filter2 = dict_filter2['type_II_flux']
-    filter2 = dict_filter2['filter']
+    list_flux_dict = load(filename_filter)
+    
+    type_Ia_flux = get_dict(list_flux_dict['type_Ia_flux'])
+    type_Ibc_flux = get_dict(list_flux_dict['type_Ibc_flux'])
+    type_II_flux = get_dict(list_flux_dict['type_II_flux'])
+    
+    type_Ia_flux_filter1 = np.asarray(type_Ia_flux[filter1])
+    type_Ibc_flux_filter1 = np.asarray(type_Ibc_flux[filter1])
+    type_II_flux_filter1 = np.asarray(type_II_flux[filter1])
+    
+    type_Ia_flux_filter2 = np.asarray(type_Ia_flux[filter2])
+    type_Ibc_flux_filter2 = np.asarray(type_Ibc_flux[filter2])
+    type_II_flux_filter2 = np.asarray(type_II_flux[filter2])
 
     type_Ia_flux_diff = np.subtract(type_Ia_flux_filter2, type_Ia_flux_filter1)
     type_Ibc_flux_diff = np.subtract(type_Ibc_flux_filter2,
@@ -51,9 +51,9 @@ def contour(my_dir, file_dir, filter1, filter2, z, point_flux_filter1,
     flux = [type_Ia_flux_filter1, type_Ibc_flux_filter1, type_II_flux_filter1]
     diff = [type_Ia_flux_diff, type_Ibc_flux_diff, type_II_flux_diff]
 
-    for i, item in enumerate(flux):
+    for i, item in enumerate(diff):
         outlier_mask = (flux[i] < np.percentile(
-                        flux[i], 95)) & (diff[i] < np.percentile(diff[i], 95))
+                        flux[i], 98)) & (diff[i] < np.percentile(diff[i], 98))
         flux[i] = flux[i][outlier_mask]
         diff[i] = diff[i][outlier_mask]
 
@@ -123,7 +123,7 @@ def scatter(my_dir, file_dir, filter1, filter2, z, outdir):
                                      type_Ibc_flux_filter1)
     type_II_flux_diff = np.subtract(type_II_flux_filter2, type_II_flux_filter1)
 
-    flux = [type_Ia_flux_filter1, type_Ibc_flux_filter1, type_II_flux_filter1]
+    flux = np.asarray([type_Ia_flux_filter1, type_Ibc_flux_filter1, type_II_flux_filter1])
     diff = [type_Ia_flux_diff, type_Ibc_flux_diff, type_II_flux_diff]
 
     for i, item in enumerate(flux):
