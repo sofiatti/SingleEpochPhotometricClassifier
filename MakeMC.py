@@ -1,13 +1,17 @@
-import random
-import numpy as np
 import sncosmo
-import cPickle as pickle
-import gzip
 import time
 import os
-from numpy.random import normal, uniform, choice
-from scipy import io, interpolate, optimize
 import argparse
+import numpy as np
+from load_save import save_file
+from numpy.random import seed, normal, uniform, choice
+from scipy import io, interpolate, optimize
+
+my_dir = '/Users/carolinesofiatti/projects/classification/data/'
+seed(11)
+dust = sncosmo.CCM89Dust()
+hostr_v = 3.1
+t0 = 0
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -18,12 +22,12 @@ parser.add_argument(
                 help='Minimum phase ex.: 0')
 parser.add_argument(
                 dest='phase_max', type=int,
-                help='Minimum phase ex.: 5')
+                help='Maximum phase ex.: 5')
+parser.add_argument(
+                dest='z_min', type=float,
+                help='Minimum redshift ex.: 2')
 parser.add_argument(
                 dest='z_max', type=float,
-                help='Maximum redshift ex.: 2')
-parser.add_argument(
-                dest='z_mix', type=float,
                 help='Maximum redshift ex.: 0.5')
 parser.add_argument(
                 dest='z_interval', type=float,
@@ -34,16 +38,15 @@ parser.add_argument(
                 help='List of strings where the strings are filter names.')
 args = parser.parse_args()
 
-my_dir = '/Users/carolinesofiatti/projects/classification/data/'
 filters = parser.get_default('filters')
-
-t0 = 0
-hostr_v = 3.1
-dust = sncosmo.CCM89Dust()
-random.seed(11)
 
 zero_point = {'f105w': 26.235, 'f140w': 26.437, 'f160w': 25.921,
               'uvf814w': 25.0985, 'zpsys': 'ab'}
+
+my_mabs = {'Ibc': normal(-17.6, scale=1),
+           'II': normal(-16.80, scale=0.97),
+           'IIn': normal(-18.62, scale=1.48),
+           'IIl': normal(-17.98, scale=0.9)}
 
 all_model_Ibc = ['s11-2005hl', 's11-2005hm', 's11-2006fo', 'nugent-sn1bc',
                  'nugent-hyper', 's11-2006jo', 'snana-2004fe',
@@ -67,15 +70,6 @@ all_model_II = ['s11-2005lc', 's11-2005gi', 's11-2006jl', 'nugent-sn2p',
                 'snana-2006ez', 'snana-2006ix']
 
 
-def all_mabs(sne_type):
-    # The majority of Type II are IIp
-    my_mabs = {'Ibc': normal(-17.6, scale=1),
-               'II': normal(-16.80, scale=0.97),
-               'IIn': normal(-18.62, scale=1.48),
-               'IIl': normal(-17.98, scale=0.9)}
-    return(my_mabs[sne_type])
-
-
 def which_salt(z):
     salt_name = 'salt2'
     salt_version = '2.4'
@@ -95,7 +89,7 @@ def which_salt(z):
     return salt_name, salt_version
 
 
-def obsflux_Ia(z, my_phase):
+def obsflux_Ia(z):
     """Given a filter, redshift z at given phase, generates the observed
     magnitude for SNe Type Ia"""
 
@@ -104,7 +98,6 @@ def obsflux_Ia(z, my_phase):
     x1 = normal(0., 1.)
     c = normal(0., 0.1)
     mabs = normal(-19.1 - alpha*x1 + beta*c, scale=0.15)
-    zpsys = zero_point['zpsys']
     salt_name, salt_version = which_salt(z)
     model_Ia = sncosmo.Model(source=sncosmo.get_source(salt_name,
                                                        version=salt_version))
@@ -113,23 +106,14 @@ def obsflux_Ia(z, my_phase):
     p = {'z': z, 't0': t0, 'x1': x1, 'c': c}
     p['x0'] = model_Ia.get('x0')
     model_Ia.set(**p)
-    phase = my_phase + model_Ia.source.peakphase('bessellb')
-
-    keys = filters
-    values = np.zeros(len(filters))
-    all_obsflux_Ia = dict(zip(keys, values))
-
-    for filter in filters:
-        zp = zero_point[filter]
-        obsflux_Ia = model_Ia.bandflux(filter, t0+(phase * (1+z)), zp, zpsys)
-        all_obsflux_Ia[filter] = obsflux_Ia
-    return all_obsflux_Ia, p, salt_name, salt_version
+    p['salt_name'] = salt_name
+    p['salt_version'] = salt_version
+    return model_Ia, p
 
 
 def obsflux_cc(z, sn_type, all_model):
     """Given a filter and redshift z, generates the observed
     magnitude for SNe Type Ibc or Type II"""
-    zpsys = zero_point['zpsys']
     my_model = choice(all_model)
     if my_model in ['s11-2004hx', 'nugent-sn2l']:
         sn_type = 'IIl'
@@ -138,13 +122,21 @@ def obsflux_cc(z, sn_type, all_model):
     model = sncosmo.Model(source=sncosmo.get_source(my_model),
                           effects=[dust], effect_names=['host'],
                           effect_frames=['rest'])
-    mabs = all_mabs(sn_type)
+    mabs = my_mabs[sn_type]
     model.set(z=z)
     model.set_source_peakabsmag(mabs, 'bessellb', 'vega')
     p_core_collapse = {'z': z, 't0': t0, 'hostebv': uniform(-0.1, 0.65),
                        'hostr_v': hostr_v}
     model.set(**p_core_collapse)
-    my_phase = uniform(0., 5.)
+    return model, p_core_collapse
+
+
+def get_flux_filter(z, filter, sn_type, model, min_phase=None, max_phase=None):
+    zpsys = zero_point['zpsys']
+    if sn_type != 'Ia':
+        my_phase = uniform(0., 5.)
+    else:
+        my_phase = uniform(min_phase, max_phase)
     phase = my_phase + model.source.peakphase('bessellb')
 
     keys = filters
@@ -154,15 +146,7 @@ def obsflux_cc(z, sn_type, all_model):
         zp = zero_point[filter]
         obsflux = model.bandflux(filter, t0+(phase * (1+z)), zp, zpsys)
         all_obsflux[filter] = obsflux
-    return all_obsflux, p_core_collapse
-
-
-def save_file(object, filename, protocol=-1):
-    """Saves a compressed object to disk"""
-    file = gzip.GzipFile(filename, 'wb')
-    pickle.dump(object, file, protocol)
-    file.close()
-    return ()
+    return all_obsflux
 
 
 def z_from_photo_z(photo_z_file, n, my_z_array=None):
@@ -209,74 +193,56 @@ def mc_file(n, min_phase, max_phase, z=None, photo_z_file=None,
     if not os.path.exists(files_dir):
         os.makedirs(files_dir)
 
-    type_Ia_flux = []
-    type_Ibc_flux = []
-    type_II_flux = []
-
-    p_Ia = []
-    p_Ibc = []
-    p_II = []
-
-    salt_name = []
-    salt_version = []
+   # flux_dict = {'type_Ia': {'fluxes': {'f105w': [], 'f140w': [], 'f105w':[],
+   #              'f814w': []}, {'params':{, 'type_Ibc':, 'type_II':}
 
     for i in range(n):
-        if i % (n/100) == 0:
-            print i/(n/100), '% complete'
-        my_phase = uniform(min_phase, max_phase)
-
-        my_obsflux_Ia, my_p_Ia, my_salt_name, my_salt_version = obsflux_Ia(
-                        z_array[i], my_phase)
+        print i
+    #        if i % (n/100) == 0:
+    #            print i/(n/100), '% complete'
+        my_model_Ia, my_p_Ia, = obsflux_Ia(z_array[i])
+        print my_p_Ia.keys()
+       # my_obsflux_Ia = get_flux_filter(z, filter, 'Ia', my_model_Ia,
+        #                                args.phase_min, args.phase_max)
+        '''
         type_Ia_flux.append(my_obsflux_Ia)
         p_Ia.append(my_p_Ia)
         salt_name.append(my_salt_name)
         salt_version.append(my_salt_version)
 
-        my_obsflux_Ibc, my_p_Ibc = obsflux_cc(z_array[i], 'Ibc',
-                                              all_model_Ibc)
+        my_model_Ibc, my_p_Ibc = obsflux_cc(z_array[i], 'Ibc',
+                                            all_model_Ibc)
+        my_obsflux_Ibc = get_flux_filter(z, filter, 'Ibc', my_model_Ibc)
         type_Ibc_flux. append(my_obsflux_Ibc)
         p_Ibc.append(my_p_Ibc)
 
-        my_obsflux_II, my_p_II = obsflux_cc(z_array[i], 'II',
-                                            all_model_II)
+        my_model_II, my_p_II = obsflux_cc(z_array[i], 'II',
+                                          all_model_II)
+        my_obsflux_II = get_flux_filter(z, filter, 'II', my_model_Ibc)
         type_II_flux.append(my_obsflux_II)
         p_II.append(my_p_II)
 
     if z is None:
         new_fname = files_dir + '/simulated_mc.gz'
-        keys = ['type_Ia_flux', 'type_Ia_params', 'type_Ibc_flux',
-                'type_Ibc_params', 'type_II_flux', 'type_II_params', 'z',
-                'filter', 'salt_name', 'salt_version']
-        values = [type_Ia_flux, p_Ia, type_Ibc_flux, p_Ibc, type_II_flux, p_II,
-                  z_array, filter, salt_name, salt_version]
 
     else:
-        fname = files_dir + '/z%0.2f' % z_array[i] + '_simulated_mc.gz'
+        fname = my_dir + 'test/check/z%0.2f' % z_array[i] + '_simulated_mc.gz'
         # now we want to remove the dot
         i = fname.index('.')
         new_fname = fname[:i] + fname[i+1:]
-        keys = ['type_Ia_flux', 'type_Ia_params', 'type_Ibc_flux',
-                'type_Ibc_params', 'type_II_flux', 'type_II_params', 'filter',
-                'salt_name', 'salt_version']
-        values = [type_Ia_flux, p_Ia, type_Ibc_flux, p_Ibc, type_II_flux, p_II,
+    keys = ['type_Ia', 'type_Ibc', 'type_II']
+    values = [type_Ia_flux, p_Ia, type_Ibc_flux, p_Ibc, type_II_flux, p_II,
                   filter, salt_name, salt_version]
     mc = dict(zip(keys, values))
     # pickle.dump( montecarlo, open( new_fname, 'wb'))
     save_file(mc, new_fname)
     return()
 
-all_z = np.arange(args.z_mix, args.z_max + args.z_interval, args.z_interval)
+all_z = np.arange(args.z_min, args.z_max + args.z_interval, args.z_interval)
 for i in all_z:
     start = time.time()
     mc_file(args.n, args.phase_min, args.phase_max, i)
     print 'It took', time.time() - start, 'seconds.'
 
-'''
-Think about this one some more:
-
-start = time.time()
-#mc_file(args.n, 'f105w', args.phase_min, args.phase_max,
-         photo_z_file='zprob_v0.06_09.000129')
-mc_file(args.n, 'f105w', 0., 5., z=1.23)
-print 'It took', time.time() - start, 'seconds.'
-'''
+    '''
+mc_file(args.n, args.phase_min, args.phase_max, 1.50)
