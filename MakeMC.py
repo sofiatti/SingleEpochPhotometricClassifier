@@ -130,16 +130,12 @@ def obsflux_cc(z, sn_type, all_model):
     p_core_collapse = {'z': z, 't0': t0, 'hostebv': uniform(-0.1, 0.65),
                        'hostr_v': hostr_v}
     model.set(**p_core_collapse)
-    return model, p_core_collapse
+    my_phase = uniform(0., 5.)
+    return model, p_core_collapse, my_phase
 
 
-def get_flux(z, filter, sn_type, model, min_phase=None,
-             max_phase=None):
-    zpsys = zero_point['zpsys']
-    if sn_type != 'Ia':
-        my_phase = uniform(0., 5.)
-    else:
-        my_phase = uniform(min_phase, max_phase)
+def get_flux(z, filter, sn_type, model, my_phase):
+    zpsys = zero_point['zpsys']   
     phase = my_phase + model.source.peakphase('bessellb')
     zp = zero_point[filter]
     obsflux = model.bandflux(filter, t0+(phase * (1+z)), zp, zpsys)
@@ -203,16 +199,19 @@ def mc_file(n, min_phase, max_phase, z=None, photo_z_file=None,
     for i in range(n):
     #        if i % (n/100) == 0:
     #            print i/(n/100), '% complete'
+        my_phase = uniform(min_phase, max_phase)
         my_model_Ia, my_p_Ia = obsflux_Ia(z_array[i])
-        my_model_Ibc, my_p_Ibc = obsflux_cc(z_array[i], 'Ibc',
+        my_model_Ibc, my_p_Ibc, my_phase_Ibc = obsflux_cc(z_array[i], 'Ibc',
                                             all_model_Ibc)
-        my_model_II, my_p_II = obsflux_cc(z_array[i], 'II',
+        my_model_II, my_p_II, my_phase_II = obsflux_cc(z_array[i], 'II',
                                           all_model_II)
         for j, filter in enumerate(filters):
             all_fluxes[j, :][i] = get_flux(z, filter, 'Ia', my_model_Ia,
-                                           min_phase, max_phase)
-            all_fluxes[j, :][i+n] = get_flux(z, filter, 'Ibc', my_model_Ibc)
-            all_fluxes[j, :][i+(2*n)] = get_flux(z, filter, 'II', my_model_II)
+                                           my_phase)
+            all_fluxes[j, :][i+n] = get_flux(z, filter, 'Ibc', my_model_Ibc, 
+                                             my_phase_Ibc)
+            all_fluxes[j, :][i+(2*n)] = get_flux(z, filter, 'II', my_model_II,
+                                                 my_phase_II)
 
     for i, key in enumerate(sorted_keys):
         mc_dict[key]['fluxes'] = dict(zip(filters, [all_fluxes[0, i*n:(i*n+n)],
