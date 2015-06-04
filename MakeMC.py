@@ -1,13 +1,12 @@
-import random
-import numpy as np
+import argparse
 import sncosmo
-import cPickle as pickle
 import gzip
 import time
 import os
-from numpy.random import normal, uniform, choice
+import numpy as np
+import cPickle as pickle
 from scipy import io, interpolate, optimize
-import argparse
+from numpy.random import seed, normal, uniform, choice
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -20,10 +19,10 @@ parser.add_argument(
                 dest='phase_max', type=int,
                 help='Minimum phase ex.: 5')
 parser.add_argument(
-                dest='z_max', type=float,
-                help='Maximum redshift ex.: 2')
+                dest='z_min', type=float,
+                help='Minimum redshift ex.: 2')
 parser.add_argument(
-                dest='z_mix', type=float,
+                dest='z_max', type=float,
                 help='Maximum redshift ex.: 0.5')
 parser.add_argument(
                 dest='z_interval', type=float,
@@ -40,7 +39,7 @@ filters = parser.get_default('filters')
 t0 = 0
 hostr_v = 3.1
 dust = sncosmo.CCM89Dust()
-random.seed(11)
+seed(11)
 
 zero_point = {'f105w': 26.235, 'f140w': 26.437, 'f160w': 25.921,
               'uvf814w': 25.0985, 'zpsys': 'ab'}
@@ -221,8 +220,8 @@ def mc_file(n, min_phase, max_phase, z=None, photo_z_file=None,
     salt_version = []
 
     for i in range(n):
-        if i % (n/100) == 0:
-            print i/(n/100), '% complete'
+#        if i % (n/100) == 0:
+#            print i/(n/100), '% complete'
         my_phase = uniform(min_phase, max_phase)
 
         my_obsflux_Ia, my_p_Ia, my_salt_name, my_salt_version = obsflux_Ia(
@@ -265,7 +264,7 @@ def mc_file(n, min_phase, max_phase, z=None, photo_z_file=None,
     save_file(mc, new_fname)
     return()
 
-all_z = np.arange(args.z_mix, args.z_max + args.z_interval, args.z_interval)
+all_z = np.arange(args.z_min, args.z_max + args.z_interval, args.z_interval)
 for i in all_z:
     start = time.time()
     mc_file(args.n, args.phase_min, args.phase_max, i)
