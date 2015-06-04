@@ -43,11 +43,6 @@ filters = parser.get_default('filters')
 zero_point = {'f105w': 26.235, 'f140w': 26.437, 'f160w': 25.921,
               'uvf814w': 25.0985, 'zpsys': 'ab'}
 
-my_mabs = {'Ibc': normal(-17.6, scale=1),
-           'II': normal(-16.80, scale=0.97),
-           'IIn': normal(-18.62, scale=1.48),
-           'IIl': normal(-17.98, scale=0.9)}
-
 all_model_Ibc = ['s11-2005hl', 's11-2005hm', 's11-2006fo', 'nugent-sn1bc',
                  'nugent-hyper', 's11-2006jo', 'snana-2004fe',
                  'snana-2004gq', 'snana-sdss004012', 'snana-2006fo',
@@ -69,6 +64,13 @@ all_model_II = ['s11-2005lc', 's11-2005gi', 's11-2006jl', 'nugent-sn2p',
                 'snana-2007pg', 's11-2004hx', 'nugent-sn2l', 'nugent-sn2n',
                 'snana-2006ez', 'snana-2006ix']
 
+def all_mabs(sne_type):
+    # The majority of Type II are IIp
+    my_mabs = {'Ibc': normal(-17.6, scale=1),
+               'II': normal(-16.80, scale=0.97),
+               'IIn': normal(-18.62, scale=1.48),
+               'IIl': normal(-17.98, scale=0.9)}
+    return(my_mabs[sne_type])
 
 def which_salt(z):
     salt_name = 'salt2'
@@ -122,7 +124,7 @@ def obsflux_cc(z, sn_type, all_model):
     model = sncosmo.Model(source=sncosmo.get_source(my_model),
                           effects=[dust], effect_names=['host'],
                           effect_frames=['rest'])
-    mabs = my_mabs[sn_type]
+    mabs = all_mabs(sn_type)
     model.set(z=z)
     model.set_source_peakabsmag(mabs, 'bessellb', 'vega')
     p_core_collapse = {'z': z, 't0': t0, 'hostebv': uniform(-0.1, 0.65),
