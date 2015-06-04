@@ -91,8 +91,19 @@ def which_salt(z):
             break
     return salt_name, salt_version
 
+def get_flux(z, filter, sn_type, model, min_phase=None,
+             max_phase=None):
+    my_phase = uniform(min_phase, max_phase)
+    zpsys = zero_point['zpsys']
+    if sn_type != 'Ia':
+        my_phase = uniform(0., 5.)
+    phase = my_phase + model.source.peakphase('bessellb')
+    zp = zero_point[filter]
+    obsflux = model.bandflux(filter, t0+(phase * (1+z)), zp, zpsys)
+    print filter, sn_type, z, obsflux
+    return obsflux
 
-def obsflux_Ia(z, my_phase):
+def obsflux_Ia(z):
     """Given a filter, redshift z at given phase, generates the observed
     magnitude for SNe Type Ia"""
 
@@ -110,17 +121,7 @@ def obsflux_Ia(z, my_phase):
     p = {'z': z, 't0': t0, 'x1': x1, 'c': c}
     p['x0'] = model_Ia.get('x0')
     model_Ia.set(**p)
-    phase = my_phase + model_Ia.source.peakphase('bessellb')
-
-    keys = filters
-    values = np.zeros(len(filters))
-    all_obsflux_Ia = dict(zip(keys, values))
-
-    for filter in filters:
-        zp = zero_point[filter]
-        obsflux_Ia = model_Ia.bandflux(filter, t0+(phase * (1+z)), zp, zpsys)
-        all_obsflux_Ia[filter] = obsflux_Ia
-    return all_obsflux_Ia, p, salt_name, salt_version
+    return model_Ia, p, salt_name, salt_version
 
 
 def obsflux_cc(z, sn_type, all_model):
@@ -141,17 +142,7 @@ def obsflux_cc(z, sn_type, all_model):
     p_core_collapse = {'z': z, 't0': t0, 'hostebv': uniform(-0.1, 0.65),
                        'hostr_v': hostr_v}
     model.set(**p_core_collapse)
-    my_phase = uniform(0., 5.)
-    phase = my_phase + model.source.peakphase('bessellb')
-
-    keys = filters
-    values = np.zeros(len(filters))
-    all_obsflux = dict(zip(keys, values))
-    for filter in filters:
-        zp = zero_point[filter]
-        obsflux = model.bandflux(filter, t0+(phase * (1+z)), zp, zpsys)
-        all_obsflux[filter] = obsflux
-    return all_obsflux, p_core_collapse
+    return model, p_core_collapse
 
 
 def save_file(object, filename, protocol=-1):
@@ -221,7 +212,18 @@ def mc_file(n, min_phase, max_phase, z=None, photo_z_file=None,
 #        if i % (n/100) == 0:
 #            print i/(n/100), '% complete'
         my_phase = uniform(min_phase, max_phase)
-
+        print my_phase
+        my_model_Ia, p, salt_name, salt_version= obsflux_Ia(z_array[i])
+        my_model_Ibc, my_p_Ibc = obsflux_cc(z_array[i], 'Ibc',
+                                            all_model_Ibc)
+        my_model_II, my_p_II = obsflux_cc(z_array[i], 'II',
+                                          all_model_II)
+        for j, filter in enumerate(filters):
+            get_flux(z, filter, 'Ia', my_model_Ia,
+                                           min_phase, max_phase)
+            get_flux(z, filter, 'Ibc', my_model_Ibc)
+            get_flux(z, filter, 'II', my_model_II)
+'''            
         my_obsflux_Ia, my_p_Ia, my_salt_name, my_salt_version = obsflux_Ia(
                         z_array[i], my_phase)
         type_Ia_flux.append(my_obsflux_Ia)
@@ -261,7 +263,7 @@ def mc_file(n, min_phase, max_phase, z=None, photo_z_file=None,
     # pickle.dump( montecarlo, open( new_fname, 'wb'))
     save_file(mc, new_fname)
     return()
-
+'''
 all_z = np.arange(args.z_min, args.z_max + args.z_interval, args.z_interval)
 for i in all_z:
     start = time.time()
