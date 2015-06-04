@@ -3,7 +3,7 @@ import time
 import os
 import argparse
 import numpy as np
-from load_save import save_file
+from load_save import save_file,  get_dict
 from numpy.random import seed, normal, uniform, choice
 from scipy import io, interpolate, optimize
 
@@ -131,22 +131,17 @@ def obsflux_cc(z, sn_type, all_model):
     return model, p_core_collapse
 
 
-def get_flux_filter(z, filter, sn_type, model, min_phase=None, max_phase=None):
+def get_flux(z, filter, sn_type, model, min_phase=None,
+             max_phase=None):
     zpsys = zero_point['zpsys']
     if sn_type != 'Ia':
         my_phase = uniform(0., 5.)
     else:
         my_phase = uniform(min_phase, max_phase)
     phase = my_phase + model.source.peakphase('bessellb')
-
-    keys = filters
-    values = np.zeros(len(filters))
-    all_obsflux = dict(zip(keys, values))
-    for filter in filters:
-        zp = zero_point[filter]
-        obsflux = model.bandflux(filter, t0+(phase * (1+z)), zp, zpsys)
-        all_obsflux[filter] = obsflux
-    return all_obsflux
+    zp = zero_point[filter]
+    obsflux = model.bandflux(filter, t0+(phase * (1+z)), zp, zpsys)
+    return obsflux
 
 
 def z_from_photo_z(photo_z_file, n, my_z_array=None):
@@ -182,60 +177,47 @@ def mc_file(n, min_phase, max_phase, z=None, photo_z_file=None,
     filter flux.
 
     z is either an array (for photo_z_file) or a number"""
-
-    if z is None:
-        z_array = z_from_photo_z(photo_z_file, n, z_for_photo_z_file)
-
-    else:
-        z_array = np.ones(n)*z
-
     files_dir = my_dir + 'mc_files_%.0f_%.0f_%.0f' % (n, min_phase, max_phase)
     if not os.path.exists(files_dir):
         os.makedirs(files_dir)
 
-   # flux_dict = {'type_Ia': {'fluxes': {'f105w': [], 'f140w': [], 'f105w':[],
-   #              'f814w': []}, {'params':{, 'type_Ibc':, 'type_II':}
-
-    for i in range(n):
-        print i
-    #        if i % (n/100) == 0:
-    #            print i/(n/100), '% complete'
-        my_model_Ia, my_p_Ia, = obsflux_Ia(z_array[i])
-        print my_p_Ia.keys()
-       # my_obsflux_Ia = get_flux_filter(z, filter, 'Ia', my_model_Ia,
-        #                                args.phase_min, args.phase_max)
-        '''
-        type_Ia_flux.append(my_obsflux_Ia)
-        p_Ia.append(my_p_Ia)
-        salt_name.append(my_salt_name)
-        salt_version.append(my_salt_version)
-
-        my_model_Ibc, my_p_Ibc = obsflux_cc(z_array[i], 'Ibc',
-                                            all_model_Ibc)
-        my_obsflux_Ibc = get_flux_filter(z, filter, 'Ibc', my_model_Ibc)
-        type_Ibc_flux. append(my_obsflux_Ibc)
-        p_Ibc.append(my_p_Ibc)
-
-        my_model_II, my_p_II = obsflux_cc(z_array[i], 'II',
-                                          all_model_II)
-        my_obsflux_II = get_flux_filter(z, filter, 'II', my_model_Ibc)
-        type_II_flux.append(my_obsflux_II)
-        p_II.append(my_p_II)
-
     if z is None:
+        z_array = z_from_photo_z(photo_z_file, n, z_for_photo_z_file)
         new_fname = files_dir + '/simulated_mc.gz'
 
     else:
-        fname = my_dir + 'test/check/z%0.2f' % z_array[i] + '_simulated_mc.gz'
+        z_array = np.ones(n)*z
+        fname = my_dir + 'test/check/z%0.2f' % z_array[0] + '_simulated_mc.gz'
         # now we want to remove the dot
         i = fname.index('.')
         new_fname = fname[:i] + fname[i+1:]
-    keys = ['type_Ia', 'type_Ibc', 'type_II']
-    values = [type_Ia_flux, p_Ia, type_Ibc_flux, p_Ibc, type_II_flux, p_II,
-                  filter, salt_name, salt_version]
-    mc = dict(zip(keys, values))
-    # pickle.dump( montecarlo, open( new_fname, 'wb'))
-    save_file(mc, new_fname)
+
+    all_fluxes = np.empty([len(filters), 3*n])
+    mc_dict = {'type_Ia': {'fluxes': {}, 'params': {}},
+               'type_Ibc': {'fluxes': {}, 'params': {}},
+               'type_II': {'fluxes': {}, 'params': {}}}
+    sorted_keys = sorted(mc_dict, key=str.lower)
+
+    for i in range(n):
+    #        if i % (n/100) == 0:
+    #            print i/(n/100), '% complete'
+        my_model_Ia, my_p_Ia = obsflux_Ia(z_array[i])
+        my_model_Ibc, my_p_Ibc = obsflux_cc(z_array[i], 'Ibc',
+                                            all_model_Ibc)
+        my_model_II, my_p_II = obsflux_cc(z_array[i], 'II',
+                                          all_model_II)
+        for j, filter in enumerate(filters):
+            all_fluxes[j, :][i] = get_flux(z, filter, 'Ia', my_model_Ia,
+                                           min_phase, max_phase)
+            all_fluxes[j, :][i+n] = get_flux(z, filter, 'Ibc', my_model_Ibc)
+            all_fluxes[j, :][i+(2*n)] = get_flux(z, filter, 'II', my_model_II)
+
+    for i, key in enumerate(sorted_keys):
+        mc_dict[key]['fluxes'] = dict(zip(filters, [all_fluxes[0, i*n:(i*n+n)],
+                                          all_fluxes[1, i*n:i*n+n],
+                                          all_fluxes[2, i*n:i*n+n],
+                                          all_fluxes[3, i*n:i*n+n]]))
+    save_file(mc_dict, new_fname)
     return()
 
 all_z = np.arange(args.z_min, args.z_max + args.z_interval, args.z_interval)
@@ -244,5 +226,4 @@ for i in all_z:
     mc_file(args.n, args.phase_min, args.phase_max, i)
     print 'It took', time.time() - start, 'seconds.'
 
-    '''
-mc_file(args.n, args.phase_min, args.phase_max, 1.50)
+#mc_file(args.n, args.phase_min, args.phase_max, 1.50)
