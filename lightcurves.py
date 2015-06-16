@@ -28,7 +28,7 @@ f814w_wfc3uvis = filter2bandpass('f814w_wfc3uvis.dat')
 '''
 
 
-def lightcurve_Ia(filter, z, x1, c):
+def lightcurve_Ia(filter, z, x1, c, x0=None):
     """Given a filter and redshift z, generates the observed
     flux for SNe Type Ia"""
 
@@ -60,6 +60,8 @@ def lightcurve_Ia(filter, z, x1, c):
     model_Ia.set(z=z)
     model_Ia.set_source_peakabsmag(mabs, 'bessellb', 'vega')
     p = {'z': z, 't0': t0, 'x1': x1, 'c': c}
+    if x0 is not None:
+	p['x0']=x0
     model_Ia.set(**p)
     phase_array = np.linspace(model_Ia.mintime(), model_Ia.maxtime(), 100)
     obsflux_Ia = model_Ia.bandflux(filter, phase_array, zp=zp, zpsys=zpsys)
