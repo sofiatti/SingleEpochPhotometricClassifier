@@ -2,6 +2,8 @@
 
 # Exclude notebooks/ except certain ones.
 /notebooks/*
+# Exclude yaml file
+/*.yaml
 #!/notebooks/foo
 
 /rf_sf_pz/build
