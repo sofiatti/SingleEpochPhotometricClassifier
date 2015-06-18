@@ -91,7 +91,7 @@ def which_salt(z):
     return salt_name, salt_version
 
 
-def obsflux_Ia(z):
+def obsflux_Ia(z, min_phase, max_phase):
     """Given a filter, redshift z at given phase, generates the observed
     magnitude for SNe Type Ia"""
 
@@ -99,6 +99,7 @@ def obsflux_Ia(z):
     beta = 3.
     x1 = normal(0., 1.)
     c = normal(0., 0.1)
+    my_phase = uniform(min_phase, max_phase)
     mabs = normal(-19.1 - alpha*x1 + beta*c, scale=0.15)
     salt_name, salt_version = which_salt(z)
     model_Ia = sncosmo.Model(source=sncosmo.get_source(salt_name,
@@ -110,6 +111,7 @@ def obsflux_Ia(z):
     model_Ia.set(**p)
     p['salt_name'] = salt_name
     p['salt_version'] = salt_version
+    
     return model_Ia, p
 
 
@@ -199,12 +201,14 @@ def mc_file(n, min_phase, max_phase, z=None, photo_z_file=None,
     for i in range(n):
     #        if i % (n/100) == 0:
     #            print i/(n/100), '% complete'
-        my_phase = uniform(min_phase, max_phase)
-        my_model_Ia, my_p_Ia = obsflux_Ia(z_array[i])
+    
+        my_model_Ia, my_p_Ia, my_phase_Ia = obsflux_Ia(z_array[i])
         my_model_Ibc, my_p_Ibc, my_phase_Ibc = obsflux_cc(z_array[i], 'Ibc',
                                             all_model_Ibc)
         my_model_II, my_p_II, my_phase_II = obsflux_cc(z_array[i], 'II',
                                           all_model_II)
+        print 'II: ', my_phase_II
+        
         for j, filter in enumerate(filters):
             all_fluxes[j, :][i] = get_flux(z, filter, 'Ia', my_model_Ia,
                                            my_phase)
