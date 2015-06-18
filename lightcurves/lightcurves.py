@@ -9,7 +9,7 @@ hostr_v = 3.1
 dust = sncosmo.CCM89Dust()
 
 zero_point = {'f105w': 26.235, 'f140w': 26.437, 'f160w': 25.921,
-              'uvf814w': 25.0985, 'zpsys': 'ab'}
+              'f814w': 25.0985, 'zpsys': 'ab'}
 
 '''
 def filter2bandpass(filter_file):
@@ -153,7 +153,7 @@ def lightcurve_II(filter, z, hostebv_II):
 
 def plot_Ia(z, x1, c, filters, dates, data_flux_filter1, data_flux_filter1_err,
             data_flux_filter2, data_flux_filter2_err,
-            data_flux_filter3, data_flux_filter3_err, phase):
+            data_flux_filter3, data_flux_filter3_err, phase, x0=None):
 
     all_phase0 = (dates[0] - dates[0][0]) + phase*(1+z)
     all_phase1 = (dates[1] - dates[1][0]) + phase*(1+z)
@@ -167,11 +167,11 @@ def plot_Ia(z, x1, c, filters, dates, data_flux_filter1, data_flux_filter1_err,
     ax3 = plt.subplot2grid((3, 3), (0, 2))
 
     lightcurve_00, x0_0, salt_name_0, salt_version_0 = lightcurve_Ia(filters[0],
-                                                                     z, x1, c)
+                                                                     z, x0, x1, c)
     lightcurve_10, x0_1, salt_name_1, salt_version_1 = lightcurve_Ia(filters[1],
-                                                                     z, x1, c)
+                                                                     z, x0, x1, c)
     lightcurve_20, x0_2, salt_name_2, salt_version_2 = lightcurve_Ia(filters[2],
-                                                                     z, x1, c)
+                                                                     z, x0, x1, c)
 
     ax1.plot(lightcurve_00['phase_array'], lightcurve_00['obsflux'])
     ax1.errorbar(all_phase0, data_flux_filter1, xerr=0,
@@ -241,7 +241,7 @@ def plot_Ibc(z, hostebv_Ibc, filters, dates,
 
     lightcurve_00 = lightcurve_Ibc('f140w', z, hostebv_Ibc)
     lightcurve_10 = lightcurve_Ibc('f105w', z, hostebv_Ibc)
-    lightcurve_20 = lightcurve_Ibc('uvf814w', z, hostebv_Ibc)
+    lightcurve_20 = lightcurve_Ibc('f814w', z, hostebv_Ibc)
 
     for i in range(len(model_Ibc)):
         ax1.plot(lightcurve_00[model_Ibc[i]][1], lightcurve_00[model_Ibc[i]][0])
@@ -306,7 +306,7 @@ def plot_II(z, hostebv_II, filters, dates, data_flux_filter1,
 
     lightcurve_00 = lightcurve_II('f140w', z, hostebv_II)
     lightcurve_10 = lightcurve_II('f105w', z, hostebv_II)
-    lightcurve_20 = lightcurve_II('uvf814w', z, hostebv_II)
+    lightcurve_20 = lightcurve_II('f814w', z, hostebv_II)
 
     for i in range(len(model_II)):
         ax1.plot(lightcurve_00[model_II[i]][1], lightcurve_00[model_II[i]][0]),
