@@ -1,0 +1,26 @@
+import yaml
+import sys
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument(dest='input_yaml', type=str,
+                    help='Input yaml file for this SNe at this epoch')
+args = parser.parse_args()
+stream = open(args.input_yaml, 'r')
+var = yaml.load(stream)
+
+my_dir = var['my_dir']
+file_dir = var['file_dir']
+outdir = var['outdir']
+arrays_file = var['arrays_file']
+
+filter1 = var['filter1']
+filter2 = var['filter2']
+filter3 = var['filter3']
+flux_filter1 = var['flux_filter1']
+flux_filter2 = var['flux_filter2']
+flux_filter3 = var['flux_filter3']
+flux_filter1_err = var['flux_filter1_err']
+flux_filter2_err = var['flux_filter2_err']
+flux_filter3_err = var['flux_filter3_err']
+x0 = var['x0']
