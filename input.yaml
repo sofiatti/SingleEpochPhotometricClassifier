@@ -1,0 +1,43 @@
+# Directories 
+my_dir: "/Users/carolinesofiatti/projects/SingleEpochPhotoClass/data/"
+simulated_data_dir: "n1000_phase_-5_0/"
+outdir: "/Users/carolinesofiatti/projects/SingleEpochPhotoClass/temp/plots/"
+
+# File with Random Forest and Survival Function results
+file_with_RF_and_SF_arrays: "random-forest_survival-function.p"
+
+final_pdf: 
+    RF: yes
+    SF: yes
+    photoz: yes
+
+# photoz_type: ['file', 'gauss', no]
+photoz_type: 'file' 
+file: '/Users/carolinesofiatti/projects/classification/data/plots/SPT2040_SE_09May15.sav'                   
+gauss: 
+    mu: 1.4
+    sigma: 0.2
+
+# Plot names
+photoz_plot_name: 'photoz.png'
+random_forest_plot_name: 'random-forest.png'
+survival_function_plot_name: 'survival-function.png'
+# Default is concatnation of subplot names with '_' as the separator.  
+# Example: photoz_random-forest_survival-funtion.png
+final_pdf_plot_name: 'default' 
+
+# Data
+filter1: 'f105w'
+flux_filter1: 4.26282830027
+flux_filter1_err: 0.468917137843 
+
+filter2: 'f140w'
+flux_filter2: 4.94420585098 
+flux_filter2_err: 0.553211057328
+
+filter3: 'uvf814w'
+flux_filter3: 0.738372793349 
+flux_filter3_err: 0.3
+
+# Fixing Salt Parameters
+x0: no
