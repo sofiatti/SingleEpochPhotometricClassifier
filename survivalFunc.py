@@ -1,5 +1,5 @@
 import numpy as np
-from scipy import stats
+from sklearn.neighbors import KernelDensity
 from funcsForSimulatedData import load, file_name, add_error
 
 
@@ -10,22 +10,21 @@ def find_nearest(array, value):
 
 def kde3d(x, y, z, data_point):
 
-    x, y, z = np.asarray(x), np.asarray(y), np.asarray(z)
-    x, y, z = np.squeeze(x), np.squeeze(y), np.squeeze(z)
-
-    values = np.vstack([x, y, z])
-    kde = stats.gaussian_kde(values)
-
+    values = np.vstack([x, y, z]).T
     # Create a regular 3D grid with 50 points in each dimension
     xmin, ymin, zmin = x.min(), y.min(), z.min()
     xmax, ymax, zmax = x.max(), y.max(), z.max()
     xi, yi, zi = np.mgrid[xmin:xmax:50j, ymin:ymax:50j, zmin:zmax:50j]
 
-    # Evaluate the KDE on a regular grid...
     coords = np.vstack([item.ravel() for item in [xi, yi, zi]])
-    density = kde(coords).reshape(xi.shape)
+    kde_coords = coords.T
+    # Evaluate the KDE on a regular grid.
+    kde = KernelDensity(bandwidth=4)
+    kde = kde.fit(values)
+    log_pdf = kde.score_samples(kde_coords)
+    pdf = np.exp(log_pdf)
+    pdf = pdf.reshape(xi.shape)
 
-    kde_grid = density
     xem = coords[0].reshape(50, 2500)[:, 0]
     yem = coords[1].reshape(2500, 50)[:, 0]
     zem = coords[2].reshape(50, 2500)[0, :]
@@ -34,8 +33,8 @@ def kde3d(x, y, z, data_point):
     y_bin, y_idx = find_nearest(yem, data_point[1])
     z_bin, z_idx = find_nearest(zem, data_point[2])
 
-    data_H = kde_grid[x_idx][y_idx][z_idx]
-    H = np.sort(kde_grid.ravel())[::-1]
+    data_H = pdf[x_idx][y_idx][z_idx]
+    H = np.sort(pdf.ravel())[::-1]
     percentile = sum(H[H > data_H])/H.sum()
     return (percentile)
 
