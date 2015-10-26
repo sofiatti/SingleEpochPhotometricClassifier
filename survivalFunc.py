@@ -1,5 +1,6 @@
 import numpy as np
 from sklearn.neighbors import KernelDensity
+from sklearn.grid_search import GridSearchCV
 from funcsForSimulatedData import load, file_name, add_error
 
 
@@ -8,26 +9,36 @@ def find_nearest(array, value):
     return array[idx], idx
 
 
+def points_per_dimension(minimum, maximum, delta):
+    points = (maximum - minimum)/delta
+    return points
+
+
 def kde3d(x, y, z, data_point):
 
     values = np.vstack([x, y, z]).T
     # Create a regular 3D grid with 50 points in each dimension
     xmin, ymin, zmin = x.min(), y.min(), z.min()
     xmax, ymax, zmax = x.max(), y.max(), z.max()
-    xi, yi, zi = np.mgrid[xmin:xmax:50j, ymin:ymax:50j, zmin:zmax:50j]
+    xnum = points_per_dimension(xmin, xmax, 0.3) * 1j
+    ynum = points_per_dimension(ymin, ymax, 0.3) * 1j
+    znum = points_per_dimension(zmin, zmax, 0.3) * 1j
+    xi, yi, zi = np.mgrid[xmin:xmax:xnum, ymin:ymax:ynum, zmin:zmax:znum]
 
     coords = np.vstack([item.ravel() for item in [xi, yi, zi]])
     kde_coords = coords.T
     # Evaluate the KDE on a regular grid.
-    kde = KernelDensity(bandwidth=4)
-    kde = kde.fit(values)
+    params = {'bandwidth': np.logspace(-1, 1, 20)}
+    grid = GridSearchCV(KernelDensity(), params)
+    grid.fit(values)
+    kde = grid.best_estimator_
     log_pdf = kde.score_samples(kde_coords)
     pdf = np.exp(log_pdf)
     pdf = pdf.reshape(xi.shape)
 
-    xem = coords[0].reshape(50, 2500)[:, 0]
-    yem = coords[1].reshape(2500, 50)[:, 0]
-    zem = coords[2].reshape(50, 2500)[0, :]
+    xem = np.unique(np.ravel(xi))
+    yem = np.unique(np.ravel(yi))
+    zem = np.unique(np.ravel(zi))
 
     x_bin, x_idx = find_nearest(xem, data_point[0])
     y_bin, y_idx = find_nearest(yem, data_point[1])
