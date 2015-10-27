@@ -203,7 +203,7 @@ def combined(final_pdf, my_dir, file_dir, filter1, filter2,
     rf = np.asarray(rf)
     sf = np.asarray(sf)
 
-    if photo_z_type is not None:
+    if photo_z_type is not False:
         photo_z, my_z = iterator('photo_z', my_dir, file_dir, filter1,
                                  filter2, filter3, flux_filter1, flux_filter2,
                                  flux_filter3, flux_filter1_err,

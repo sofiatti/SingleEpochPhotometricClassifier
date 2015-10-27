@@ -9,22 +9,18 @@ def find_nearest(array, value):
     return array[idx], idx
 
 
-def points_per_dimension(minimum, maximum, delta):
-    points = (maximum - minimum)/delta
-    return points
-
-
-def kde3d(x, y, z, data_point):
+def kde3d(x, y, z, delta, data_point):
 
     values = np.vstack([x, y, z]).T
     # Create a regular 3D grid with 50 points in each dimension
     xmin, ymin, zmin = x.min(), y.min(), z.min()
     xmax, ymax, zmax = x.max(), y.max(), z.max()
-    xnum = points_per_dimension(xmin, xmax, 0.3) * 1j
-    ynum = points_per_dimension(ymin, ymax, 0.3) * 1j
-    znum = points_per_dimension(zmin, zmax, 0.3) * 1j
-    xi, yi, zi = np.mgrid[xmin:xmax:xnum, ymin:ymax:ynum, zmin:zmax:znum]
 
+    xem = np.arange(xmin, xmax + delta, delta)
+    yem = np.arange(ymin, ymax + delta, delta)
+    zem = np.arange(zmin, zmax + delta, delta)
+
+    xi, yi, zi = np.meshgrid(xem, yem, zem, indexing='ij')
     coords = np.vstack([item.ravel() for item in [xi, yi, zi]])
     kde_coords = coords.T
     # Evaluate the KDE on a regular grid.
@@ -34,11 +30,7 @@ def kde3d(x, y, z, data_point):
     kde = grid.best_estimator_
     log_pdf = kde.score_samples(kde_coords)
     pdf = np.exp(log_pdf)
-    pdf = pdf.reshape(xi.shape)
-
-    xem = np.unique(np.ravel(xi))
-    yem = np.unique(np.ravel(yi))
-    zem = np.unique(np.ravel(zi))
+    pdf = pdf.reshape(len(xem), len(yem), len(zem))
 
     x_bin, x_idx = find_nearest(xem, data_point[0])
     y_bin, y_idx = find_nearest(yem, data_point[1])
@@ -66,15 +58,15 @@ def find_percentile(my_dir, file_dir, filter1, filter2, filter3, flux_filter1,
 
     Ia_percentile = kde3d(mc_dict['type_Ia']['flux'][filter1],
                           mc_dict['type_Ia']['flux'][filter2],
-                          mc_dict['type_Ia']['flux'][filter3], data_point)
+                          mc_dict['type_Ia']['flux'][filter3], .3, data_point)
 
     Ibc_percentile = kde3d(mc_dict['type_Ibc']['flux'][filter1],
                            mc_dict['type_Ibc']['flux'][filter2],
-                           mc_dict['type_Ibc']['flux'][filter3], data_point)
+                           mc_dict['type_Ibc']['flux'][filter3], .3, data_point)
 
     II_percentile = kde3d(mc_dict['type_II']['flux'][filter1],
                           mc_dict['type_II']['flux'][filter2],
-                          mc_dict['type_II']['flux'][filter3], data_point)
+                          mc_dict['type_II']['flux'][filter3], .3, data_point)
 
     my_percentile = (Ia_percentile, Ibc_percentile, II_percentile)
     my_percentile = np.asarray(my_percentile)
