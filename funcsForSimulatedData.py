@@ -26,6 +26,20 @@ def mask(my_flux, percent):
     return flux
 
 
+def mask3d(x, y, z, percent):
+    outlier_indices = [[], [], []]
+    for i, flux in enumerate([x, y, z]):
+        outlier_mask = flux < np.percentile(flux, percent)
+        outlier_indices[i] = np.where(outlier_mask==False)[0]
+    outlier_indices = list(set(np.ravel(outlier_indices)))
+
+    x_masked = np.delete(x, outlier_indices)
+    y_masked = np.delete(y, outlier_indices)
+    z_masked = np.delete(z, outlier_indices)
+
+    return x_masked, y_masked, z_masked
+
+
 def add_error(mc_dict, filter, flux_filter_err):
     for sne_type in mc_dict.keys():
         mc_dict[sne_type]['flux'][filter] += np.random.normal(
