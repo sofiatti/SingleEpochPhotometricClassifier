@@ -1,6 +1,6 @@
 # Directories 
 my_dir: "/Users/carolinesofiatti/projects/SingleEpochPhotoClass/data/"
-simulated_data_dir: "n1000_phase_-5_0/"
+simulated_data_dir: "n10000_phase_-5_0/"
 outdir: "/Users/carolinesofiatti/projects/SingleEpochPhotoClass/temp/plots/"
 
 # File with Random Forest and Survival Function results
@@ -23,7 +23,7 @@ photoz_plot_name: 'photoz.png'
 random_forest_plot_name: 'random-forest.png'
 survival_function_plot_name: 'survival-function.png'
 # Default is concatnation of subplot names with '_' as the separator.  
-# Example: photoz_random-forest_survival-funtion.png
+# I.e.: photoz_random-forest_survival-funtion.png
 final_pdf_plot_name: 'default' 
 
 # Data

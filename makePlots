@@ -13,25 +13,34 @@ stream = open(args.input_yaml, 'r')
 var = yaml.load(stream)
 
 photo_z_type = var['photoz_type']
-if var['photoz_type'] == 'file':
-    if var['file'] == False:
-        sys.exit('Please specify a photoz file!')
+if var['final_pdf']['photoz'] == True:
+    if var['photoz_type'] == 'file':
+        if var['file'] == False:
+            sys.exit('Please specify a photoz file!')
+        else:
+            photo_z_file = var['file']
+            photo_z_redshift_file = None
     else:
-        photo_z_file = var['file']
+        photo_z_file = None
         photo_z_redshift_file = None
+
+    if var['photoz_type'] == 'gauss':
+        try:
+            sigma = float(var['gauss']['sigma'])
+            mu = float(var['gauss']['mu'])
+        except ValueError:
+            print('Please enter a valid mu or sigma (only floats allowed).')
+    else:
+        sigma = None
+        mu = None
+
 else:
+    photo_z_type = False
     photo_z_file = None
     photo_z_redshift_file = None
-
-if var['photoz_type'] == 'gauss':
-    try:
-        sigma = float(var['gauss']['sigma'])
-        mu = float(var['gauss']['mu'])
-    except ValueError:
-        print('Please enter a valid mu or sigma (only floats allowed).')
-else:
     sigma = None
     mu = None
+
 
 my_dir = var['my_dir']
 file_dir = var['simulated_data_dir']
