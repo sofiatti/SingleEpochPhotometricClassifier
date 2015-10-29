@@ -1,3 +1,4 @@
+import os
 import yaml
 import argparse
 
@@ -49,6 +50,7 @@ d = {'my_dir': var['my_dir'],
      'flux_filter3_err': var['flux_filter3_err'],
      'x0': 'no'}
 
-new_file = 'new_' + file
+new_file = (os.path.splitext(args.input_yaml)[0] + '_new' +
+            os.path.splitext(args.input_yaml)[1])
 with open(new_file, 'w') as yaml_file:
     yaml_file.write(yaml.dump(d, default_flow_style=False))
