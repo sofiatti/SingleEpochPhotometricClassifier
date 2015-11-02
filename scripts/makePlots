@@ -1,8 +1,8 @@
-#!/Users/carolinesofiatti/anaconda/bin/python
+#!/usr/bin/env python
 
 import yaml
 import sys
-from plots import combined
+from singlEpoClass.plots import combined
 import argparse
 
 parser = argparse.ArgumentParser()
