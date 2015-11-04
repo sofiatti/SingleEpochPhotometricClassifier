@@ -38,6 +38,3 @@ flux_filter2_err: 0.553211057328
 filter3: 'uvf814w'
 flux_filter3: 0.738372793349 
 flux_filter3_err: 0.3
-
-# Fixing Salt Parameters
-x0: no

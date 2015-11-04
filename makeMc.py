@@ -1,13 +1,13 @@
 import os
-import time
 import sncosmo
 import argparse
 import numpy as np
+from progressbar import ProgressBar
 from scipy import io, interpolate, optimize
 from numpy.random import seed, normal, uniform, choice
-from funcsForSimulatedData import save, dict_from_list
+from singlEpoClass.funcsForSimulatedData import save, dict_from_list
 
-outdir = '/Users/carolinesofiatti/projects/SingleEpochPhotoClass/temp/'
+outdir = '/Users/carolinesofiatti/projects/SingleEpochPhotoClass/data/'
 dust = sncosmo.CCM89Dust()
 hostr_v = 3.1
 seed(11)
@@ -93,6 +93,16 @@ def which_salt(z):
     return salt_name, salt_version
 
 
+def max_cc_phase(my_model):
+    phase = np.linspace(-50, 150, 201)
+    model = sncosmo.Model(source=my_model)
+    model.set(z=.00000001)
+    model.set_source_peakabsmag(-19.0, 'bessellb', 'ab')
+    flux = model.bandflux('bessellb', phase, zp=25., zpsys='ab')
+    max_phase = phase[np.where(flux == flux.max())[0]]
+    return max_phase
+
+
 def get_model_Ia(z, min_phase, max_phase):
     """Given a filter, redshift z at given phase, generates the observed
     magnitude for SNe Type Ia"""
@@ -133,7 +143,8 @@ def get_model_cc(z, sn_type, all_model):
     p = {'z': z, 't0': t0, 'hostebv': uniform(-0.1, 0.65), 'hostr_v': hostr_v}
     model.set(**p)
     p['model_name'] = my_model
-    my_phase = uniform(0., 5.)
+    max_phase = max_cc_phase(my_model)
+    my_phase = uniform(-2, 3) + max_phase
     return model, p, my_phase
 
 
@@ -202,10 +213,8 @@ def mc_file(n, z=None, photo_z_file=None,
 
     p_Ia, p_Ibc, p_II = ([], [], [])
 
-    for i in range(n):
-        if i % (n/100) == 0:
-            print i/(n/100), '% complete'
-
+    pbar = ProgressBar()
+    for i in pbar(range(n)):
         my_model_Ia, my_p_Ia, my_phase_Ia = get_model_Ia(
             z_array[i], args.phase_min, args.phase_max)
         p_Ia.append(my_p_Ia)
@@ -235,6 +244,5 @@ def mc_file(n, z=None, photo_z_file=None,
 
 all_z = np.arange(args.z_min, args.z_max, args.z_interval)
 for i in all_z:
-    start = time.time()
+    print 'Redshift: %.2f' % i
     mc_file(args.n, i)
-    print 'It took', time.time() - start, 'seconds.'
